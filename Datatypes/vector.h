@@ -27,6 +27,8 @@ void* vector_push_back(vector* v, void* value);
 // Inspect an element
 void* vector_at(vector* v, size_t index);
 
+void** vector_data(vector* v);
+
 // Replace an element
 void vector_set(vector* v, size_t index, void* value);
 

@@ -45,13 +45,13 @@ void* vector_push_back(vector* v, void* value) {
 		return NULL; //Error?
 	}
 
-	if (v->capacity <= v->size + 1) {
+	if (v->capacity <= v->size) {
 		if (v->capacity == 0) {
 			v->capacity = v->default_capacity;
-			v->data = malloc(v->capacity * sizeof(value));
+			v->data = malloc(v->capacity * sizeof(void*));
 		} else {
-			void* newDataLoc = malloc(v->capacity * 2 * sizeof(value));
-			memcpy(newDataLoc, v->data, v->capacity);
+			void** newDataLoc = malloc(v->capacity * 2 * sizeof(void*));
+			memcpy(newDataLoc, v->data, v->capacity * sizeof(void*));
 			free(v->data);
 			v->data = newDataLoc;
 			v->capacity *= 2;
@@ -72,6 +72,14 @@ void* vector_at(vector* v, size_t index) {
 	}
 
 	return v->data[index];
+}
+
+void** vector_data(vector* v) {
+	if (!v) {
+		return NULL; //Error?
+	}
+
+	return v->data;
 }
 
 void vector_set(vector* v, size_t index, void* value) {
