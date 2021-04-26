@@ -76,6 +76,8 @@ void delete_hash_table(struct hash_table* ht) {
     for (int i = 0; i < ht->size; i++) {
         
         if (ht->entries[i].key != NULL) {
+            free(ht->entries[i].key);
+            ht->free_func(ht->entries[i].val);
             //!Free using val free func.
         }
     }

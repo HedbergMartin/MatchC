@@ -12,6 +12,7 @@ struct hash_entry {
 struct hash_table {
     struct hash_entry* entries;
     int size;
+    void (*free_func)(void*);
     //Would need a hash_func in and a free func
 };
 

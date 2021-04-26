@@ -5,13 +5,13 @@
 
 typedef struct queue queue;
 
-queue *queue_empty(void (*free_func)(void*));
+queue *queue_empty();
 
 bool queue_isEmpty(queue *q);
 
-int enqueue(queue *q, void *val);
+int enqueue(queue *q, void *element);
 
-//void *queue_inspect(queue *q);
+void *queue_inspect(queue *q);
 
 void* dequeue(queue *q);
 
