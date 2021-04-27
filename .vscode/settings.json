@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "hash_table_char.h": "c"
+        "hash_table_char.h": "c",
+		"memory.h": "c",
+		"stdio.h": "c",
+		"parser.h": "c"
     }
 }
