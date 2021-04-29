@@ -6,13 +6,10 @@
 #include "Datatypes/vector.h"
 
 
-//#define FUNC_GAP 3 // Gap between constant -> f_constant
 enum matchtype {
 	MT_CONSTANT, // 2 or f
 	MT_VARIABLE, // f_ or x_
 	MT_SEQUENCE // f__ or x__
-	//F_CONSTANT, // f() or h(x)
-	//F_VARIABLE // f_() or h_(x)
 };
 
 enum functype {
@@ -51,15 +48,14 @@ int terminates(char c, char terminators[]) {
 	return 0;
 }
 
-int readSymbol(const char str[], expression* expr) {
+int readSymbol(const char str[], int i, expression* expr) {
 	int begin = -1;
 	int end = -1;
 
 	int trailing_ = 0;
 
-	int i = 0;
 	char c;
-	while (!terminates((c = str[i]), "(,:")) {
+	while (!terminates((c = str[i]), ",():")) {
 		if (c == ' ') {
 			if (begin != -1 && end == -1) {
 				end = i;
@@ -104,28 +100,29 @@ int isAcceptedCharacter(char c) {
 	return 0;
 }
 
-int readArgs(const char str[], int start, expression* expr) {
-	if (str[start] == '(') {
+int readArgs(const char str[], int i, expression* expr) {
+	if (str[i] == '(') {
 		expr->f_type = FT_PREFIX;
-		int i = start + 1;
+		i++;
 
 		char c;
 		while ((c = str[i]) != '\0') {
 			if (c == ')') {
-				return i-start;
+				return i+1;
 			} else {
 				expression* expr = malloc(sizeof(expression));
 				int patternLen = parsePattern(str, expr, i);
 				if (patternLen == -1) {
 					return -1;
 				}
-				i+= patternLen;
+				i = patternLen;
 			}
-			i++;
 		}
+
+		return -1;
 	} else {
 		expr->f_type = FT_NOTAFUNC;
-		return 0;
+		return i;
 	}
 }
 
@@ -156,31 +153,41 @@ int parseTail(const char str[], int i, int top) {
 }
 
 int parsePattern(const char str[], expression* expr, int i) {
-	int top = 1;
-	if (i != 0) {
-		top = 0;
+	int top = 0;
+	if (i == 0) {
+		top = 1;
 	}
 
-	int symLen = readSymbol(str, expr);
-	if (symLen == -1) {
+	int symbolEnd = readSymbol(str, i, expr);
+	if (symbolEnd == -1) {
 		fprintf(stderr, "Error parsing a symbol in expression \"%s\"\n", str);
 		return -1;
 	}
-	i += symLen;
+	i = symbolEnd;
 	
-	int argsLen = readArgs(str, i, expr);
-	if (argsLen == -1) {
+	int argsEnd = readArgs(str, i, expr);
+	if (argsEnd == -1) {
 		fprintf(stderr, "Error parsing an argument in expression \"%s\"\n", str);
 		return -1;
 	}
-	i += argsLen;
+	i = argsEnd;
 
-	int tailLen = parseTail(str, i, top);
-	if (tailLen == -1) {
+	int tailEnd = parseTail(str, i, top);
+	if (tailEnd == -1) {
 		fprintf(stderr, "Error parsing expression \"%s\"\n", str);
 		return -1;
 	}
-	i += tailLen;
+	i = tailEnd;
+
+
+	printf("Symbol: %s, type: %s, matching: %s\n", expr->symbol, (expr->f_type ? "prefix" : "symbol"), (expr->m_type ? "variable" : "constant"));
+	// if (expr->f_type == FT_NOTAFUNC) {
+	// 	printf("Symbol: matchtype: %d, symbol: %s\n", expr->m_type, expr->symbol);
+	// } else if (expr->f_type == FT_PREFIX) {
+	// 	printf("Prefix func: matchtype: %d, symbol: %s\n", expr->m_type, expr->symbol);
+	// } else {
+	// 	printf("Error\n");
+	// }
 
 	return i;
 }
@@ -189,13 +196,6 @@ void debugPattern(const char str[]) {
 	expression* expr = malloc(sizeof(expression));
 	parsePattern(str, expr, 0);
 
-	if (expr->f_type == FT_NOTAFUNC) {
-		printf("Symbol: matchtype: %d, symbol: %s\n", expr->m_type, expr->symbol);
-	} else if (expr->f_type == FT_PREFIX) {
-		printf("Prefix func: matchtype: %d, symbol: %s\n", expr->m_type, expr->symbol);
-	} else {
-		printf("Error\n");
-	}
 }
 
 // int readExpression(char str[], char terminators[], int* lenght) {
