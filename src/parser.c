@@ -109,6 +109,8 @@ int readArgs(const char str[], int i, expression* expr) {
 		while ((c = str[i]) != '\0') {
 			if (c == ')') {
 				return i+1;
+			} else if (c == ',') {
+				i++;
 			} else {
 				expression* expr = malloc(sizeof(expression));
 				int patternLen = parsePattern(str, expr, i);
