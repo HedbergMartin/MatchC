@@ -7,10 +7,10 @@ int main(int argc, char* argv[]) {
 
 	char* str = "f(x_) := x";
 	// debugPattern(str);
-	str = "f_(x_) := x";
-	debugPattern(str);
+	// str = "f_(x_) := x";
+	// debugPattern(str);
 	// str = "f_ := x";
 	// debugPattern(str);
-	str = "f_(h(g)) := x";
+	str = "f_(h(g), j_, p()) := x";
 	debugPattern(str);
 }

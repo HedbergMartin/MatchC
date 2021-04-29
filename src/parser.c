@@ -20,7 +20,8 @@ enum functype {
 
 typedef struct expression {
 	enum matchtype m_type;
-	enum functype f_type;
+	enum functype f_type; //Possibly remove this for arity where arity -1 = notafunc
+	int arity;
 	char* symbol;
 	vector* params;
 } expression;
@@ -102,6 +103,7 @@ int isAcceptedCharacter(char c) {
 
 int readArgs(const char str[], int i, expression* expr) {
 	if (str[i] == '(') {
+		expr->arity = 0;
 		expr->f_type = FT_PREFIX;
 		i++;
 
@@ -112,11 +114,16 @@ int readArgs(const char str[], int i, expression* expr) {
 			} else if (c == ',') {
 				i++;
 			} else {
-				expression* expr = malloc(sizeof(expression));
-				int patternLen = parsePattern(str, expr, i);
+				expression* childExpr = malloc(sizeof(expression));
+				int patternLen = parsePattern(str, childExpr, i);
 				if (patternLen == -1) {
 					return -1;
 				}
+				if (expr->arity == 0) {
+					expr->params = vector_init(NULL);
+				}
+				vector_push_back(expr->params, childExpr);
+				expr->arity++;
 				i = patternLen;
 			}
 		}
@@ -124,6 +131,7 @@ int readArgs(const char str[], int i, expression* expr) {
 		return -1;
 	} else {
 		expr->f_type = FT_NOTAFUNC;
+		expr->arity = -1;
 		return i;
 	}
 }
@@ -181,8 +189,6 @@ int parsePattern(const char str[], expression* expr, int i) {
 	}
 	i = tailEnd;
 
-
-	printf("Symbol: %s, type: %s, matching: %s\n", expr->symbol, (expr->f_type ? "prefix" : "symbol"), (expr->m_type ? "variable" : "constant"));
 	// if (expr->f_type == FT_NOTAFUNC) {
 	// 	printf("Symbol: matchtype: %d, symbol: %s\n", expr->m_type, expr->symbol);
 	// } else if (expr->f_type == FT_PREFIX) {
@@ -198,6 +204,21 @@ void debugPattern(const char str[]) {
 	expression* expr = malloc(sizeof(expression));
 	parsePattern(str, expr, 0);
 
+	printExpr(expr, 0);
+}
+
+void printExpr(expression* expr, int level) {
+	for (int j = 0; j < level; j++) {
+		printf("	");
+	}
+	printf("Symbol: %s, type: %s, arity: %d, matching: %s\n", expr->symbol, (expr->f_type ? "prefix" : "symbol"), expr->arity, (expr->m_type ? "variable" : "constant"));
+	
+	if (expr->arity >= 0) {
+		expression** data = (expression**) vector_data(expr->params);
+		for (int i = 0; i < vector_size(expr->params); i++) {
+			printExpr(data[i], level + 1);
+		}
+	}
 }
 
 // int readExpression(char str[], char terminators[], int* lenght) {
