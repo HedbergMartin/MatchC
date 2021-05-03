@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
+#include <errno.h>
 
 #include <time.h>
 #include "vector.h"
@@ -31,6 +32,23 @@ typedef struct expression {
 int isAcceptedCharacter(char c);
 int _parsePattern(const char str[], expression* expr, int i);
 void printExpr(expression* expr, int level);
+void expression_free(expression* expr);
+
+expression* expr_create() {
+	expression* expr = malloc(sizeof(expression));
+	if (!expr) {
+		perror("expr");
+		exit(1);
+	}
+
+	expr->arity = -2;
+	expr->m_type = -1;
+	expr->f_type = -1;
+	expr->symbol = NULL;
+	expr->params = NULL;
+
+	return expr;
+}
 
 void parseSubject(char* expression) {
 
@@ -92,8 +110,10 @@ int readSymbol(const char str[], int i, expression* expr) {
 	}
 
 	expr->m_type = trailing_;
-	expr->symbol = malloc(sizeof(char) * (end-begin-trailing_));
-	memcpy(expr->symbol, str+begin, (end-begin-trailing_));
+	int len = (end-begin-trailing_);
+	expr->symbol = malloc(sizeof(char) * len + 1);
+	memcpy(expr->symbol, str+begin, len);
+	expr->symbol[len] = '\0';
 	//printf("Name: %.*s\n", end-begin, str+begin);
 	return i;
 }
@@ -119,13 +139,13 @@ int readArgs(const char str[], int i, expression* expr) {
 			if (c == ')') {
 				return i+1;
 			} else {
-				expression* childExpr = malloc(sizeof(expression));
+				expression* childExpr = expr_create();
 				int patternLen = _parsePattern(str, childExpr, i);
 				if (patternLen == -1) {
 					return -1;
 				}
 				if (expr->arity == 0) {
-					expr->params = vector_init(NULL);
+					expr->params = vector_init();
 				}
 				vector_push_back(expr->params, childExpr);
 				expr->arity++;
@@ -220,15 +240,29 @@ void debugPattern(const char str[]) {
     clock_t t;
 
     t = clock();
-	expression* expr = malloc(sizeof(expression));
+	expression* expr = expr_create();
 	int res = _parsePattern(str, expr, 0);
     t = clock() - t;
 
-    double time_taken = ((double)t)/CLOCKS_PER_SEC;
+    double time_taken = (((double)t)/CLOCKS_PER_SEC)*1000;
   
-    printf("took %f\n", time_taken);
+    printf("took %fms\n", time_taken);
 	if (res != -1) {
 		printExpr(expr, 0);
+	}
+	expression_free(expr);
+}
+
+void expression_free(expression* expr) {
+	if (expr != NULL) {
+		if (expr->params != NULL) {
+			vector_free(expr->params, (void (*)(void *))expression_free);
+		}
+
+		if (expr->symbol) {
+			free(expr->symbol);
+		}
+		free(expr);
 	}
 }
 

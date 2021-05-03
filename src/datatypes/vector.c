@@ -17,19 +17,18 @@ struct vector {
 	size_t capacity;
 	size_t default_capacity;
 	size_t size;
-	free_func_callback free_func;
 };
 
-vector *vector_init(free_func_callback free_func) {
+vector *vector_init() {
 	vector* v = malloc(sizeof(vector));
 	if (!v) {
 		perror("Vector");
+		exit(1);
 	}
 
 	v->capacity = 0;
 	v->default_capacity = 10;
 	v->size = 0;
-	v->free_func = free_func;
 }
 
 void vector_reserve(vector* v, size_t capacity) {
@@ -110,14 +109,14 @@ size_t vector_capacity(vector* v) {
 	return v->capacity;
 }
 
-void vector_free(vector* v) {
+void vector_free(vector* v, free_func_callback free_func) {
 	if (!v) {
 		return; //Error
 	}
 
-	if (v->free_func) {
-		for (int i = 0; i < v->size; v++) {
-			v->free_func(v->data[i]);
+	if (free_func) {
+		for (int i = 0; i < v->size; i++) {
+			free_func(v->data[i]);
 		}
 	}
 
