@@ -22,8 +22,7 @@ enum functype {
 
 typedef struct expression {
 	enum matchtype m_type;
-	enum functype f_type; //Possibly remove this for arity where arity -1 = notafunc
-	int arity;
+	enum functype f_type;
 	char* symbol;
 	vector* params;
 } expression;
@@ -41,7 +40,6 @@ expression* expr_create() {
 		exit(1);
 	}
 
-	expr->arity = -2;
 	expr->m_type = -1;
 	expr->f_type = -1;
 	expr->symbol = NULL;
@@ -130,7 +128,6 @@ int isAcceptedCharacter(char c) {
 
 int readArgs(const char str[], int i, expression* expr) {
 	if (str[i] == '(') {
-		expr->arity = 0;
 		expr->f_type = FT_PREFIX;
 		i++;
 
@@ -144,11 +141,10 @@ int readArgs(const char str[], int i, expression* expr) {
 				if (patternLen == -1) {
 					return -1;
 				}
-				if (expr->arity == 0) {
+				if (expr->params == NULL) {
 					expr->params = vector_init();
 				}
 				vector_push_back(expr->params, childExpr);
-				expr->arity++;
 				i = patternLen;
 				if (str[i] == ',') {
 					i++;
@@ -162,7 +158,6 @@ int readArgs(const char str[], int i, expression* expr) {
 		return -1;
 	} else {
 		expr->f_type = FT_NOTAFUNC;
-		expr->arity = -1;
 		return i;
 	}
 }
@@ -270,59 +265,12 @@ void printExpr(expression* expr, int level) {
 	for (int j = 0; j < level; j++) {
 		printf("	");
 	}
-	printf("Symbol: %s, type: %s, arity: %d, matching: %s\n", expr->symbol, (expr->f_type ? "prefix" : "symbol"), expr->arity, (expr->m_type ? "variable" : "constant"));
+	printf("Symbol: %s, type: %s, matching: %s\n", expr->symbol, (expr->f_type ? "prefix" : "symbol"), (expr->m_type ? "variable" : "constant"));
 	
-	if (expr->arity >= 0) {
+	if (expr->params != NULL) {
 		expression** data = (expression**) vector_data(expr->params);
 		for (int i = 0; i < vector_size(expr->params); i++) {
 			printExpr(data[i], level + 1);
 		}
 	}
 }
-
-// int readExpression(char str[], char terminators[], int* lenght) {
-// 	// enum ExpressionType expType = UNASSIGNED;
-// 	int i = 0;
-// 	while (1) {
-// 		if (terminates(terminators, str[i])) {
-// 			//Expression is done
-// 			*lenght = i;
-// 			return 0;
-// 		} else if (str[i] == '(') {
-// 			int len;
-// 			int arity;
-// 			if (readFunctionArgs(str+i+1, &len, &arity)) {
-// 				return 1;
-// 			}
-// 			i += len + 1; // + 1 Skip closing bracket
-// 		} else {
-// 			i++;
-// 		}
-// 	}
-// }
-
-// int readFunctionArgs(char str[], int* lenght, int* arity) {
-// 	int start = 0;
-
-// 	int i = 0;
-// 	*arity = 0;
-// 	while(1) {
-// 		if (str[i] == ')') {
-// 			*lenght = i+1;
-// 			return 0;
-// 		} else if (str[i] == ',') {
-// 			i++;
-// 		} else if (str[i] == '\0') {
-// 			return 1;
-// 		}
-
-// 		int len;
-// 		if (readExpression(str+i, ",)", &len)) {
-// 			return 1; //Error
-// 		}
-// 		(*arity)++;
-// 		i += len;
-// 	}
-
-// 	return i;
-// }
