@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <memory.h>
 
-#include "Datatypes/vector.h"
+#include <time.h>
+#include "vector.h"
 
 
 enum matchtype {
@@ -28,6 +29,8 @@ typedef struct expression {
 
 
 int isAcceptedCharacter(char c);
+int _parsePattern(const char str[], expression* expr, int i);
+void printExpr(expression* expr, int level);
 
 void parseSubject(char* expression) {
 
@@ -80,6 +83,10 @@ int readSymbol(const char str[], int i, expression* expr) {
 		i++;
 	}
 
+	if (begin == -1) {
+		return -1;
+	}
+
 	if (begin != -1 && end == -1) {
 		end = i;
 	}
@@ -111,11 +118,9 @@ int readArgs(const char str[], int i, expression* expr) {
 		while ((c = str[i]) != '\0') {
 			if (c == ')') {
 				return i+1;
-			} else if (c == ',') {
-				i++;
 			} else {
 				expression* childExpr = malloc(sizeof(expression));
-				int patternLen = parsePattern(str, childExpr, i);
+				int patternLen = _parsePattern(str, childExpr, i);
 				if (patternLen == -1) {
 					return -1;
 				}
@@ -125,6 +130,12 @@ int readArgs(const char str[], int i, expression* expr) {
 				vector_push_back(expr->params, childExpr);
 				expr->arity++;
 				i = patternLen;
+				if (str[i] == ',') {
+					i++;
+				}
+				while (str[i] == ' ') {
+					i++;
+				}
 			}
 		}
 
@@ -138,8 +149,8 @@ int readArgs(const char str[], int i, expression* expr) {
 
 int parseTail(const char str[], int i, int top) {
 	char c;
-	while ((c = str[i]) != '\0') {
-		if (top) {
+	if (top) {
+		while ((c = str[i]) != '\0') {
 			if (c == ':') {
 				if (str[i+1] == '=') {
 					return i;
@@ -148,21 +159,25 @@ int parseTail(const char str[], int i, int top) {
 			} else if (c != ' ') {
 				return -1;
 			}
-		} else {
+
+			i++;
+		}
+	} else {
+		while ((c = str[i]) != '\0') {
 			if (c == ',' || c == ')') {
 				return i;
 			} else if (c != ' ') {
 				return -1;
 			}
-		}
 
-		i++;
+			i++;
+		}
 	}
 
 	return -1;
 }
 
-int parsePattern(const char str[], expression* expr, int i) {
+int _parsePattern(const char str[], expression* expr, int i) {
 	int top = 0;
 	if (i == 0) {
 		top = 1;
@@ -201,10 +216,20 @@ int parsePattern(const char str[], expression* expr, int i) {
 }
 
 void debugPattern(const char str[]) {
-	expression* expr = malloc(sizeof(expression));
-	parsePattern(str, expr, 0);
 
-	printExpr(expr, 0);
+    clock_t t;
+
+    t = clock();
+	expression* expr = malloc(sizeof(expression));
+	int res = _parsePattern(str, expr, 0);
+    t = clock() - t;
+
+    double time_taken = ((double)t)/CLOCKS_PER_SEC;
+  
+    printf("took %f\n", time_taken);
+	if (res != -1) {
+		printExpr(expr, 0);
+	}
 }
 
 void printExpr(expression* expr, int level) {

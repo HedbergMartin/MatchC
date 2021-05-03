@@ -11,6 +11,7 @@ int main(int argc, char* argv[]) {
 	// debugPattern(str);
 	// str = "f_ := x";
 	// debugPattern(str);
-	str = "f_(h(g), j_, p()) := x";
+	str = "f_(h(g), j_, p(), h, h,h,h,h,h,h,h) := x";
+	//str = "f(,) := x";
 	debugPattern(str);
 }

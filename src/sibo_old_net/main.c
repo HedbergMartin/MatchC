@@ -4,6 +4,7 @@
 #include <string.h>
 #include "list.h"
 #include "discriminationNet.h"
+#include <time.h>
 
 /*struct parameters {
     bool isVar;
@@ -45,37 +46,49 @@ void printFunc(struct function* func);
 
 //? Might be interesting to hash the function names, for faster the net.
 int main(int argc, char* argv[]) {
-    //char* simple = "func[x[p_, y, z__, m[]], 2, t_, p[s_, 1]] func[test_]";
-    char* simple = "func[x[p_, y, z__, m[]], 2, t_, p[s_, 1], t_, e_ , s_, t_, s_] func[d_, a_, c_, d_] func[d_, q_, 2, d_]";
-    //char* simple = "func[a_, b, x[]]";
+    char* simple = "f[h[g], j_, p[], h, h, h, h, h, h, h, h]";
+    clock_t t;
+
+    t = clock();
     struct patternFunc* pf = parsePattern(simple, strlen(simple));
+    t = clock() - t;
+
+    double time_taken = ((double)t)/CLOCKS_PER_SEC;
+  
+    printf("took %f\n", time_taken);
     printPatternFunc(pf, 0);
+    // return 0;
+    // //char* simple = "func[x[p_, y, z__, m[]], 2, t_, p[s_, 1]] func[test_]";
+    // char* simple = "func[x[p_, y, z__, m[]], 2, t_, p[s_, 1], t_, e_ , s_, t_, s_] func[d_, a_, c_, d_] func[d_, q_, 2, d_]";
+    // //char* simple = "func[a_, b, x[]]";
+    // struct patternFunc* pf = parsePattern(simple, strlen(simple));
+    // printPatternFunc(pf, 0);
 
-    struct list* funcList = parseFunctionList(pf);
+    // struct list* funcList = parseFunctionList(pf);
 
-    struct listElem* e = listNext(funcList, NULL);
+    // struct listElem* e = listNext(funcList, NULL);
 
-    struct discrNet* funcNet = netCreate("func");
+    // struct discrNet* funcNet = netCreate("func");
 
-    while (e != NULL) {
-        struct function* func = (struct function*)e->p;
-        //printFunc(func);
+    // while (e != NULL) {
+    //     struct function* func = (struct function*)e->p;
+    //     //printFunc(func);
         
-        if (strcmp(func->name, "func") == 0) {
-            netAddBranch(funcNet, func);
-        } else {
-            struct discrNet* net = netCreate(func->name);
-            netAddBranch(net, func);
-            netPrint(net);
-            netRemove(net);
-        }
-        e = listNext(funcList, e);
-    }
-    netPrint(funcNet);
-    netRemove(funcNet);
+    //     if (strcmp(func->name, "func") == 0) {
+    //         netAddBranch(funcNet, func);
+    //     } else {
+    //         struct discrNet* net = netCreate(func->name);
+    //         netAddBranch(net, func);
+    //         netPrint(net);
+    //         netRemove(net);
+    //     }
+    //     e = listNext(funcList, e);
+    // }
+    // netPrint(funcNet);
+    // netRemove(funcNet);
 
-    freePatternFunc(pf);
-    listDelete(funcList);
+    // freePatternFunc(pf);
+    // listDelete(funcList);
 }
 
 void parseFunctionListHelper(struct list* funcList, struct patternFunc* current) {

@@ -1,3 +1,8 @@
 cmake_minimum_required(VERSION 3.10.2)
 
-add_executable(main matchc.c parser.c Datatypes/vector.c)
+add_subdirectory(datatypes)
+add_subdirectory(parsing)
+
+add_executable(main matchc.c)
+
+target_link_libraries(main datatypes parsing)
