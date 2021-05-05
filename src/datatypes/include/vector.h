@@ -15,8 +15,8 @@
 typedef struct vector vector;
 typedef void (*free_func_callback)(void *);
 
-// Creates a empty list with a free function that is used to free entries.
-vector *vector_init(free_func_callback free_func);
+// Creates a empty vector.
+vector *vector_init();
 
 // Sets the default size of the vector when first allocation occurs.
 void vector_reserve(vector* v, size_t capacity);
@@ -38,7 +38,7 @@ size_t vector_size(vector* v);
 // Gets the capacity alloctated
 size_t vector_capacity(vector* v);
 
-// Frees the vector
-void vector_free(vector* v);
+// Frees the vector, free_func for each entry
+void vector_free(vector* v, free_func_callback free_func);
 
 #endif

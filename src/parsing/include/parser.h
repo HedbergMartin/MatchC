@@ -1,6 +1,6 @@
 #ifndef MC_PARSER
 #define MC_PARSER
 
-int readName(char str[]);
+void debugPattern(const char str[]);
 
 #endif
