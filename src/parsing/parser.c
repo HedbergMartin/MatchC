@@ -117,8 +117,8 @@ int readSymbol(const char str[], int i, expression* expr) {
 }
 
 int isAcceptedCharacter(char c) {
-	if ((c >= 65 && c <= 90) || 
-		(c >= 97 && c <= 122) || 
+	if ((c >= 'A' && c <= 'Z') || 
+		(c >= 'a' && c <= 'z') || 
 		c == '_') {
 		return 1;
 	}
