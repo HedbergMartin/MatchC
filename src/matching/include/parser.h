@@ -1,9 +1,9 @@
 #ifndef MC_PARSER
 #define MC_PARSER
 
-#include "list.h"
+#include "flatterm.h"
 
-list* parsePattern(const char str[]);
+flatterm* parsePattern(const char str[]);
 void debugPattern(const char str[]);
 
 #endif

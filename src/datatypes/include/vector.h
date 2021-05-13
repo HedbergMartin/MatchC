@@ -9,6 +9,7 @@
  * Author: Martin Hedberg (96mah002@gmail.com)
  *
  * Version information:
+ *   2021-05-13: v1.1, added back poping.
  *   2021-04-21: v1.0, first implementation.
  */
 
@@ -22,7 +23,10 @@ vector *vector_init();
 void vector_reserve(vector* v, size_t capacity);
 
 // Pushes an element to the end of the vector. Expands the list
-void* vector_push_back(vector* v, void* value);
+void vector_push_back(vector* v, void* value);
+
+// Pops the last element in the vector
+void vector_pop_back(vector* v, free_func_callback free_func);
 
 // Inspect an element
 void* vector_at(vector* v, size_t index);

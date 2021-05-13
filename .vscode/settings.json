@@ -5,7 +5,8 @@
         "stdio.h": "c",
         "parser.h": "c",
         "sstream": "c",
-        "vector": "c"
+        "vector": "c",
+        "export": "c"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }
