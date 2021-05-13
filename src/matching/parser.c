@@ -6,46 +6,27 @@
 
 #include <time.h>
 #include "vector.h"
-
-
-enum matchtype {
-	MT_CONSTANT, // 2 or f
-	MT_VARIABLE, // f_ or x_
-	MT_SEQUENCE // f__ or x__
-};
-
-enum functype {
-	FT_NOTAFUNC,
-	FT_PREFIX,
-	FT_INFIX
-};
-
-typedef struct expression {
-	enum matchtype m_type;
-	enum functype f_type;
-	char* symbol;
-	vector* params;
-} expression;
+#include "flatterm.h"
 
 
 int isAcceptedCharacter(char c);
-int _parsePattern(const char str[], expression* expr, int i);
-void printExpr(expression* expr, int level);
-void expression_free(expression* expr);
+int _parsePattern(const char str[], list* flatterm, term* t, int i);
+void printExpr(list* flatterm);
+void expression_free(list* flatterm);
 
-expression* expr_create() {
-	expression* expr = malloc(sizeof(expression));
-	if (!expr) {
-		perror("expr");
+term* term_create() {
+	term* t = malloc(sizeof(term));
+	if (!t) {
+		perror("term");
 		exit(1);
 	}
 
-	expr->m_type = -1;
-	expr->f_type = -1;
-	expr->symbol = NULL;
-	expr->params = NULL;
+	t->m_type = -1;
+	t->f_type = -1;
+	t->symbol = NULL;
+	t->end = NULL;
 
-	return expr;
+	return t;
 }
 
 void parseSubject(char* expression) {
@@ -68,7 +49,7 @@ int terminates(char c, char terminators[]) {
 	return 0;
 }
 
-int readSymbol(const char str[], int i, expression* expr) {
+int readSymbol(const char str[], int i, term* t) {
 	int begin = -1;
 	int end = -1;
 
@@ -107,11 +88,11 @@ int readSymbol(const char str[], int i, expression* expr) {
 		end = i;
 	}
 
-	expr->m_type = trailing_;
+	t->m_type = trailing_;
 	int len = (end-begin-trailing_);
-	expr->symbol = malloc(sizeof(char) * len + 1);
-	memcpy(expr->symbol, str+begin, len);
-	expr->symbol[len] = '\0';
+	t->symbol = malloc(sizeof(char) * len + 1);
+	memcpy(t->symbol, str+begin, len);
+	t->symbol[len] = '\0';
 	//printf("Name: %.*s\n", end-begin, str+begin);
 	return i;
 }
@@ -126,9 +107,10 @@ int isAcceptedCharacter(char c) {
 	return 0;
 }
 
-int readArgs(const char str[], int i, expression* expr) {
+int readArgs(const char str[], int i, list* flatterm, term* t) {
 	if (str[i] == '(') {
-		expr->f_type = FT_PREFIX;
+		t->f_type = FT_PREFIX;
+		t->end = t;
 		i++;
 
 		char c;
@@ -136,15 +118,13 @@ int readArgs(const char str[], int i, expression* expr) {
 			if (c == ')') {
 				return i+1;
 			} else {
-				expression* childExpr = expr_create();
-				int patternLen = _parsePattern(str, childExpr, i);
+				term* childTerm = term_create();
+				int patternLen = _parsePattern(str, flatterm, childTerm, i);
 				if (patternLen == -1) {
 					return -1;
 				}
-				if (expr->params == NULL) {
-					expr->params = vector_init();
-				}
-				vector_push_back(expr->params, childExpr);
+
+				t->end = childTerm;
 				i = patternLen;
 				if (str[i] == ',') {
 					i++;
@@ -157,7 +137,8 @@ int readArgs(const char str[], int i, expression* expr) {
 
 		return -1;
 	} else {
-		expr->f_type = FT_NOTAFUNC;
+		t->f_type = FT_NOTAFUNC;
+		t->end = t;
 		return i;
 	}
 }
@@ -192,20 +173,21 @@ int parseTail(const char str[], int i, int top) {
 	return -1;
 }
 
-int _parsePattern(const char str[], expression* expr, int i) {
+int _parsePattern(const char str[], list* flatterm, term* t, int i) {
 	int top = 0;
 	if (i == 0) {
 		top = 1;
 	}
+	list_insert_after(flatterm, list_end(flatterm), t);
 
-	int symbolEnd = readSymbol(str, i, expr);
+	int symbolEnd = readSymbol(str, i, t);
 	if (symbolEnd == -1) {
 		fprintf(stderr, "Error parsing a symbol in expression \"%s\"\n", str);
 		return -1;
 	}
 	i = symbolEnd;
 	
-	int argsEnd = readArgs(str, i, expr);
+	int argsEnd = readArgs(str, i, flatterm, t);
 	if (argsEnd == -1) {
 		fprintf(stderr, "Error parsing an argument in expression \"%s\"\n", str);
 		return -1;
@@ -232,45 +214,44 @@ int _parsePattern(const char str[], expression* expr, int i) {
 
 void debugPattern(const char str[]) {
 
-    clock_t t;
+    clock_t time;
 
-    t = clock();
-	expression* expr = expr_create();
-	int res = _parsePattern(str, expr, 0);
-    t = clock() - t;
+    time = clock();
+	list* ft = parsePattern(str);
+    time = clock() - time;
 
-    double time_taken = (((double)t)/CLOCKS_PER_SEC)*1000;
+    double time_taken = (((double)time)/CLOCKS_PER_SEC)*1000;
   
     printf("took %fms\n", time_taken);
-	if (res != -1) {
-		printExpr(expr, 0);
+	if (ft != NULL) {
+		printExpr(ft);
 	}
-	expression_free(expr);
-}
-
-void expression_free(expression* expr) {
-	if (expr != NULL) {
-		if (expr->params != NULL) {
-			vector_free(expr->params, (void (*)(void *))expression_free);
-		}
-
-		if (expr->symbol) {
-			free(expr->symbol);
-		}
-		free(expr);
-	}
-}
-
-void printExpr(expression* expr, int level) {
-	for (int j = 0; j < level; j++) {
-		printf("	");
-	}
-	printf("Symbol: %s, type: %s, matching: %s\n", expr->symbol, (expr->f_type ? "prefix" : "symbol"), (expr->m_type ? "variable" : "constant"));
 	
-	if (expr->params != NULL) {
-		expression** data = (expression**) vector_data(expr->params);
-		for (int i = 0; i < vector_size(expr->params); i++) {
-			printExpr(data[i], level + 1);
-		}
+	list_kill(ft, free);
+}
+
+list* parsePattern(const char str[]) {
+	list* ft = list_empty();
+	term* t = term_create();
+	int res = _parsePattern(str, ft, t, 0);
+	if (res == -1) {
+		printf("Error"); //TODO Errormessage and free of resources!
+		return NULL;
 	}
+	return ft;
+}
+
+void printExpr(list* flatterm) {
+	list_pos ft_pos = list_first(flatterm);
+
+	while (1) {
+		term* t = list_inspect(flatterm, ft_pos);
+		printf("Symbol: %s, type: %s, matching: %s, end: %s\n", t->symbol, (t->f_type ? "prefix" : "symbol"), (t->m_type ? "variable" : "constant"), t->end->symbol);
+
+		if (list_isEnd(flatterm, ft_pos)) {
+			return;
+		}
+		ft_pos = list_next(flatterm, ft_pos);
+	}
+	
 }
