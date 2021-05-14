@@ -4,7 +4,8 @@
 enum matchtype {
 	MT_CONSTANT, // 2 or f
 	MT_VARIABLE, // f_ or x_
-	MT_SEQUENCE // f__ or x__
+	MT_SEQUENCE, // f__ or x__
+	MT_STAR // f___ or x___
 };
 
 enum functype {
@@ -18,7 +19,9 @@ typedef struct flatterm flatterm;
 typedef struct term {
 	struct term* next;
 	struct term* prev;
+	struct term* parent;
 	struct term* end;
+	int argno;
 	enum matchtype m_type;
 	enum functype f_type;
 	char* symbol;

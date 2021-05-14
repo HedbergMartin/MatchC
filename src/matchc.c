@@ -9,8 +9,8 @@ int main(int argc, char* argv[]) {
 	d_net* net = net_init();
 
 	flatterm* ft_subject = parsePattern("f(2, c) := x");
-	add_pattern(net, parsePattern("f(x_, a_) := x"));
-	add_pattern(net, parsePattern("f(2, a_) := x"));
+	add_pattern(net, parsePattern("f(x___, y__) := x"));
+	// add_pattern(net, parsePattern("f(2, a_) := x"));
 	printf("Net: \n");
 	print_net(net);
 	printf("-----\nMatches:\n");

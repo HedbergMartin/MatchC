@@ -9,7 +9,7 @@
 
 
 int isAcceptedCharacter(char c);
-int _parsePattern(const char str[], flatterm* ft, int i);
+int _parsePattern(const char str[], flatterm* ft, int i, term* parent, int argno);
 
 term* term_create() {
 	term* t = malloc(sizeof(term));
@@ -126,6 +126,7 @@ int readArgs(const char str[], int i, flatterm* ft, term* t) {
 	if (str[i] == '(') {
 		t->f_type = FT_PREFIX;
 		i++;
+		int argno = 0;
 
 		char c;
 		while ((c = str[i]) != '\0') {
@@ -133,12 +134,13 @@ int readArgs(const char str[], int i, flatterm* ft, term* t) {
 				t->end = flatterm_end(ft);
 				return i+1;
 			} else {
-				int patternLen = _parsePattern(str, ft, i);
+				int patternLen = _parsePattern(str, ft, i, t, argno);
 				if (patternLen == -1) {
 					return -1;
 				}
 
 				i = patternLen;
+				argno++;
 				if (str[i] == ',') {
 					i++;
 				}
@@ -186,13 +188,15 @@ int parseTail(const char str[], int i, int top) {
 	return -1;
 }
 
-int _parsePattern(const char str[], flatterm* ft, int i) {
+int _parsePattern(const char str[], flatterm* ft, int i, term* parent, int argno) {
 	int top = 0;
 	if (i == 0) {
 		top = 1;
 	}
 
 	term* t = flatterm_push_back(ft);
+	t->parent = parent;
+	t->argno = argno;
 
 	int symbolEnd = readSymbol(str, i, t);
 	if (symbolEnd == -1) {
@@ -246,7 +250,7 @@ void debugPattern(const char str[]) {
 
 flatterm* parsePattern(const char str[]) {
 	flatterm* ft = flatterm_init();
-	int res = _parsePattern(str, ft, 0);
+	int res = _parsePattern(str, ft, 0, NULL, 0);
 	if (res == -1) {
 		printf("Error"); //TODO Errormessage and free of resources!
 		return NULL;

@@ -96,6 +96,21 @@ void print_net(d_net* dn) {
 
 list* _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector) {
     if (t == NULL) {
+        d_net* subnet = NULL;
+        void** subnet_data = vector_data(dn->subnets);
+        for (int i = 0; i < vector_size(dn->subnets); i++) {
+            subnet = (d_net*)subnet_data[i];
+            if (subnet->m_type == MT_STAR) {
+                subst* newSubst = malloc(sizeof(subst));
+                newSubst->from = subnet->symbol;
+                newSubst->to = "#";
+                vector_push_back(subst_vector, newSubst);
+
+                _match(subnet, subject, t, subst_vector);
+                vector_pop_back(subst_vector, free);
+            }
+        }
+
         if (dn->matchId != 0) {
             printf("Match, id: %d, ", dn->matchId);
             for (int i = 0; i < vector_size(subst_vector); i++) {
@@ -112,18 +127,54 @@ list* _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector) {
             _match(subnet, subject, t->next, subst_vector);
         }
 
+        void** subnet_data = vector_data(dn->subnets);
         for (int i = 0; i < vector_size(dn->subnets); i++) {
-            subnet = (d_net*)vector_at(dn->subnets, i);
+            subnet = (d_net*)subnet_data[i];
+
+            if (subnet->m_type == MT_CONSTANT) {
+                continue;
+            }
             
             // Variable substitution matching, replace whole term.
-            if (subnet->m_type == MT_VARIABLE) {
+            subst* newSubst = malloc(sizeof(subst));
+            newSubst->from = subnet->symbol;
+            newSubst->to = t->symbol;
+            vector_push_back(subst_vector, newSubst);
+
+            _match(subnet, subject, t->end->next, subst_vector);
+            vector_pop_back(subst_vector, free);
+
+            if (subnet->m_type == MT_STAR) {
                 subst* newSubst = malloc(sizeof(subst));
                 newSubst->from = subnet->symbol;
-                newSubst->to = t->symbol;
+                newSubst->to = "#";
                 vector_push_back(subst_vector, newSubst);
 
-                _match(subnet, subject, t->end->next, subst_vector);
+                _match(subnet, subject, t, subst_vector);
                 vector_pop_back(subst_vector, free);
+            }
+
+            if (t->parent != NULL) { //Has a parent
+                term* vp = t->parent;
+                if (subnet->m_type == MT_SEQUENCE || subnet->m_type == MT_STAR) {
+                    //j = sista argumentet.
+                    term* tEnd = t->next;
+                    char strBuffer[1024] = ""; //TODO lazy.
+                    strcat(strBuffer, t->symbol);
+                    while (tEnd != vp->end->next) {
+                        strcat(strBuffer, tEnd->symbol);
+                        // t = slå ihop allt mellan nuvarande term och i
+                        //matcha med den substitutionen
+                        subst* newSubst = malloc(sizeof(subst));
+                        newSubst->from = subnet->symbol;
+                        newSubst->to = strBuffer;
+                        vector_push_back(subst_vector, newSubst);
+
+                        _match(subnet, subject, tEnd->end->next, subst_vector);
+                        vector_pop_back(subst_vector, free);
+                        tEnd = tEnd->end->next;
+                    }
+                }
             }
         }
     }
