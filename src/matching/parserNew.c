@@ -4,6 +4,8 @@
 #include <string.h>
 #include "parser.h"
 
+term* _parseInfix(const char str[], int *index, term* term1, char* name, term** parent);
+
 bool isAcceptedCharacter(char c) {
 	if ((c >= 'A' && c <= 'Z') || 
 		(c >= 'a' && c <= 'z') || 
@@ -117,7 +119,19 @@ term* _parseNextTerm(const char str[], int *index, term* prev, term* parent) {
     return t;
 }
 
-term* _parseInfix(const char str[], int *index, term* term1, char* name) {
+char infixSymbols[] = {'+', '-', '/', '*'};
+char* infixNames[] = {"PLUS", "MINUS", "DIV", "MULT"};
+term* _parseInfixes(const char str[], int *index, term* term1, term** parent) {
+
+    for (int i = 0; i < sizeof(infixSymbols); i++) {
+
+        if (str[*index] == infixSymbols[i]) {
+            return _parseInfix(str, index, term1, infixNames[i], parent);
+        }
+    }
+}
+
+term* _parseInfix(const char str[], int *index, term* term1, char* name, term** parent) {
     *index += 1;
     term* newParent = term_create(term1->prev, term1->parent);
     newParent->f_type = FT_PREFIX;
@@ -150,9 +164,18 @@ term* _parseInfix(const char str[], int *index, term* term1, char* name) {
     newParent->end = term2;
     fprintf(stderr, "%s and %s\n", term1->symbol, term2->symbol);
 
-    /*if (isInfix(str[*index])) { NOT WORKING ATM
-        term2 = _parseInfix(str, index, term2, "test");
-    }*/
+    if (isInfix(str[*index])) {
+        term2 = _parseInfixes(str, index, term2, parent);
+    }
+
+    if (newParent->parent != NULL) {
+        newParent->parent->end = term2;
+    }
+
+    if (str[*index] == ']') {
+        *parent = newParent->parent->parent;
+    }
+    
     return term2;
 }
 
@@ -160,11 +183,12 @@ term* _parseInfix(const char str[], int *index, term* term1, char* name) {
 
 flatterm* flatify(term* first) {
     term* last = first;
-
+    fprintf(stderr, "last: %s\n", last->symbol);
     //fprintf(stderr, "%d\n", first);
     //Backing up
     while (last->next != NULL) {        
         last = last->next;
+        fprintf(stderr, "last: %s\n", last->symbol);
     }
     flatterm* ft = flatterm_init_complete(first, last);
     return ft;
@@ -182,28 +206,21 @@ flatterm* parsePattern(const char str[]) {
     int args = 0;
 
     while (str[i] != '\0') {
-        fprintf(stderr, "str: %s\n", &str[i] );
         current = _parseNextTerm(str, &i, prev, parent);
 
-        if (current == NULL && str[i] != '\0' && str[i] != ':') { //Invalid term
-            i += 1;
-            continue;
-        }
         if (first == NULL) {
             first = current;
         }
-
-
-        fprintf(stderr, "Switcher: %c\n", str[i]);
-
 
         switch(str[i]) {
             case '\0':
                 doneReading = true;
                 break;
             case '[':
-                current->f_type = FT_PREFIX;
-                parent = current;
+                if (current != NULL) {
+                    current->f_type = FT_PREFIX;
+                    parent = current;
+                }
                 break;
             case ']':
 
@@ -211,10 +228,14 @@ flatterm* parsePattern(const char str[]) {
                     fprintf(stderr, "Invalid ']' before '['\n");
                     return NULL;
                 }
-                parent->argno += 1;
-                parent->end = current;
+                if (current != NULL) {
+                    parent->argno += 1;
+                    parent->end = current;
+                    current->end = current;
+                } else {
+                    parent->end = prev;
+                }
                 parent = parent->parent;
-                current->end = current;
                 break;
             case ',':
 
@@ -222,9 +243,11 @@ flatterm* parsePattern(const char str[]) {
                     fprintf(stderr, "Invalid ',' before '['\n");
                     return NULL;
                 }
-                current->f_type = FT_NOTAFUNC;
-                parent->argno += 1;
-                current->end = current;
+                if (current != NULL) {
+                    current->f_type = FT_NOTAFUNC;
+                    parent->argno += 1;
+                    current->end = current;
+                }
                 break;
             case ':':
                 
@@ -238,39 +261,30 @@ flatterm* parsePattern(const char str[]) {
                 }
                 doneReading = true;
                 break;
-            case '+':
-                current = _parseInfix(str, &i, current, "PLUS");
-                wasInfixed = true;
-                break;
-            case '-': 
-                current = _parseInfix(str, &i, current, "MINUS");
-                wasInfixed = true;
-                break;
-            case '*': 
-                current = _parseInfix(str, &i, current, "MULT");
-                wasInfixed = true;
-                break;
+            case '+': //Fallthrough
+                //current = _parseInfix(str, &i, current, &parent);
+                //break;
+            case '-': //Fallthrough
+                //current = _parseInfix(str, &i, current, &parent);
+                //break;
+            case '*': //Fallthrough
+                //current = _parseInfix(str, &i, current, &parent);
+                //break;
             case '/':
-                current = _parseInfix(str, &i, current, "DIV");
-                wasInfixed = true;
+
+                if (current != NULL) {
+                    current = _parseInfixes(str, &i, current, &parent);
+                }
                 break;
         }
 
         if (doneReading) {
             break;
         }
-
-        if (str[i] == ']' && wasInfixed) {
-            parent = current->parent->parent->parent;
-
-            if (current->parent->parent != NULL) {
-                current->parent->parent->end = current;
-            }
+        
+        if (current != NULL) {
+            prev = current;
         }
-        
-        wasInfixed = false;
-        
-        prev = current;
         i += 1;
     }
     return flatify(first);
