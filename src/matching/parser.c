@@ -11,6 +11,7 @@
 int isAcceptedCharacter(char c);
 int _parsePattern(const char str[], flatterm* ft, int i, term* parent, int argno);
 
+
 term* term_create() {
 	term* t = malloc(sizeof(term));
 	if (!t) {
@@ -47,6 +48,11 @@ void parseSubject(char* expression) {
 
 }
 
+/**
+ * Checks if the character @param c 
+ * matches any terminating character in @param terminators
+ * if it does then it @returns 1, otherwise it @returns 0
+ **/
 int terminates(char c, char terminators[]) {
 	if (c == '\0') {
 		return 1;
@@ -63,6 +69,12 @@ int terminates(char c, char terminators[]) {
 	return 0;
 }
 
+
+
+/**
+ *
+ *
+ **/
 int readSymbol(const char str[], int i, term* t) {
 	int begin = -1;
 	int end = -1;
@@ -70,7 +82,7 @@ int readSymbol(const char str[], int i, term* t) {
 	int trailing_ = 0;
 
 	char c;
-	while (!terminates((c = str[i]), ",():")) {
+	while (!terminates((c = str[i]), ",[]:")) {
 		if (c == ' ') {
 			if (begin != -1 && end == -1) {
 				end = i;
@@ -103,7 +115,8 @@ int readSymbol(const char str[], int i, term* t) {
 	}
 
 	t->m_type = trailing_;
-	int len = (end-begin-trailing_);
+	//int len = (end-begin-trailing_);
+	int len = (end-begin);
 	t->symbol = malloc(sizeof(char) * len + 1);
 	memcpy(t->symbol, str+begin, len);
 	t->symbol[len] = '\0';
@@ -123,14 +136,14 @@ int isAcceptedCharacter(char c) {
 }
 
 int readArgs(const char str[], int i, flatterm* ft, term* t) {
-	if (str[i] == '(') {
+	if (str[i] == '[') {
 		t->f_type = FT_PREFIX;
 		i++;
 		int argno = 0;
 
 		char c;
 		while ((c = str[i]) != '\0') {
-			if (c == ')') {
+			if (c == ']') {
 				t->end = flatterm_end(ft);
 				return i+1;
 			} else {
@@ -175,7 +188,7 @@ int parseTail(const char str[], int i, int top) {
 		}
 	} else {
 		while ((c = str[i]) != '\0') {
-			if (c == ',' || c == ')') {
+			if (c == ',' || c == ']') {
 				return i;
 			} else if (c != ' ') {
 				return -1;
