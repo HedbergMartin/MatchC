@@ -8,13 +8,20 @@ int main(int argc, char* argv[]) {
 
 	d_net* net = net_init();
 
-	flatterm* ft_subject = parsePattern("f(2, c) := x");
-	add_pattern(net, parsePattern("f(x___, y__) := x"));
+	flatterm* ft_subject = parsePattern("f(a, 2, c) := x");
+	add_pattern(net, parsePattern("f(x_(2), y_) := x"));
 	// add_pattern(net, parsePattern("f(2, a_) := x"));
 	printf("Net: \n");
 	print_net(net);
 	printf("-----\nMatches:\n");
-	pattern_match(net, ft_subject);
+	vector* matches = pattern_match(net, ft_subject);
+
+	for (int i = 0; i < vector_size(matches); i++) {
+		printf("%s\n", (char*)vector_at(matches, i));
+	}
+
+	vector_free(matches, free);
+	
 	// debugPattern(str);
 	// str = "f_(x_) := x";
 	// debugPattern(str);

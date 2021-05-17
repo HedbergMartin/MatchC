@@ -2,7 +2,7 @@
 #define MC_DNET
 
 #include "flatterm.h"
-#include "list.h"
+#include "vector.h"
 
 typedef struct d_net d_net;
 
@@ -19,6 +19,6 @@ typedef struct subst {
 d_net* net_init();
 void add_pattern(d_net* dn, flatterm* ft);
 void print_net(d_net* dn);
-list* pattern_match(d_net* dn, flatterm* subject);
+vector* pattern_match(d_net* dn, flatterm* subject);
 
 #endif
