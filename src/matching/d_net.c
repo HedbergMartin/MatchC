@@ -5,12 +5,13 @@
 struct d_net {
     char* symbol;
 	enum matchtype m_type;
+	enum functype f_type;
     vector* subnets;
     int matchId; //For debugging only
 };
 
 
-d_net* find_subnet(d_net* dn, char* symbol);
+d_net* find_subnet(d_net* dn, char* symbol, enum functype f_type);
 
 d_net* net_init() {
     d_net* dn = malloc(sizeof(d_net));
@@ -27,12 +28,13 @@ void add_pattern(d_net* dn, flatterm* ft) {
 
     d_net* subnet = NULL;
     while (t) {
-        if ((subnet = find_subnet(dn, t->symbol)) != NULL) {
+        if ((subnet = find_subnet(dn, t->symbol, t->f_type)) != NULL) {
             dn = subnet;
         } else {
             subnet = net_init();
             subnet->symbol = t->symbol;
             subnet->m_type = t->m_type;
+            subnet->f_type = t->f_type;
             vector_push_back(dn->subnets, subnet);
             dn = subnet;
         }
@@ -43,12 +45,12 @@ void add_pattern(d_net* dn, flatterm* ft) {
     subnet->matchId = nextid++;
 }
 
-d_net* find_subnet(d_net* dn, char* symbol) {
+d_net* find_subnet(d_net* dn, char* symbol, enum functype f_type) {
     void** sn_data = vector_data(dn->subnets);
     for (int i = 0; i < vector_size(dn->subnets); i++) {
         d_net* sn = (d_net*)sn_data[i];
 
-        if (sn->m_type == MT_CONSTANT) {
+        if (sn->m_type == MT_CONSTANT && f_type == sn->f_type) {
             if (strcmp(sn->symbol, symbol) == 0) {
                 return sn;
             }
@@ -59,15 +61,7 @@ d_net* find_subnet(d_net* dn, char* symbol) {
 }
 
 
-int _print_net(d_net* dn, int offset) {
-    // printf("%s, children:", dn->symbol);
-
-    // for (int i = 0; i < vector_size(dn->subnets); i++) {
-    //     printf(" %s", ((d_net*)(vector_at(dn->subnets, i)))->symbol);
-    // }
-    // printf("\n");
-
-    
+int _print_net(d_net* dn, int offset) {    
     int newBranch = 0;
     printf("%s ", dn->symbol);
     for (int i = 0; i < vector_size(dn->subnets); i++) {
@@ -128,7 +122,7 @@ void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector*
         d_net* subnet = NULL;
         
         // Symbol matching
-        if ((subnet = find_subnet(dn, t->symbol)) != NULL) {
+        if ((subnet = find_subnet(dn, t->symbol, t->f_type)) != NULL) {
             _match(subnet, subject, t->next, subst_vector, matches);
         }
 
@@ -139,6 +133,10 @@ void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector*
             if (subnet->m_type == MT_CONSTANT) {
                 continue;
             }
+
+            if (subnet->f_type != t->f_type) {
+                continue;
+            }
             
             // Variable substitution matching, replace whole term.
             subst* newSubst = malloc(sizeof(subst));
@@ -146,7 +144,7 @@ void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector*
             newSubst->to = t->symbol;
             vector_push_back(subst_vector, newSubst);
 
-            _match(subnet, subject, t->end->next, subst_vector, matches);
+            _match(subnet, subject, t->next, subst_vector, matches);
             vector_pop_back(subst_vector, free);
 
             if (subnet->m_type == MT_STAR) {
