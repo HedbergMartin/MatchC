@@ -139,13 +139,13 @@ void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector*
             }
             
             // Variable substitution matching, replace whole term.
-            subst* newSubst = malloc(sizeof(subst));
-            newSubst->from = subnet->symbol;
-            newSubst->to = t->symbol;
-            vector_push_back(subst_vector, newSubst);
+            subst newSubst;
+            newSubst.from = subnet->symbol;
+            newSubst.to = t->symbol;
+            vector_push_back(subst_vector, &newSubst);
 
             _match(subnet, subject, t->next, subst_vector, matches);
-            vector_pop_back(subst_vector, free);
+            vector_pop_back(subst_vector, NULL);
 
             if (subnet->m_type == MT_STAR) {
                 subst newSubst;
@@ -164,6 +164,7 @@ void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector*
                     char strBuffer[1024] = ""; //TODO lazy.
                     strcat(strBuffer, t->symbol);
                     while (tEnd != vp->end->next) {
+                        strcat(strBuffer, ", ");
                         strcat(strBuffer, tEnd->symbol);
                         // t = slå ihop allt mellan nuvarande term och i
                         //matcha med den substitutionen
