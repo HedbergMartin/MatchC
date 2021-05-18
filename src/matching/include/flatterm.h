@@ -29,6 +29,8 @@ typedef struct term {
 
 flatterm* flatterm_init();
 
+flatterm* flatterm_init_complete(term* first, term* end);
+
 term* flatterm_push_back(flatterm* ft);
 
 term* flatterm_first(flatterm* ft);

@@ -88,7 +88,9 @@ void print_net(d_net* dn) {
     }
 }
 
-void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector* matches) {
+
+void _match(d_net* dn, subjectFlatterm* t, vector* subst_vector, vector* matches) {
+//void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector* matches) {
     if (t == NULL) {
         d_net* subnet = NULL;
         void** subnet_data = vector_data(dn->subnets);
@@ -100,7 +102,8 @@ void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector*
                 newSubst.to = "#";
                 vector_push_back(subst_vector, &newSubst);
 
-                _match(subnet, subject, t, subst_vector, matches);
+
+                _match(subnet, t, subst_vector, matches);
                 vector_pop_back(subst_vector, NULL);
             }
         }
@@ -123,7 +126,7 @@ void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector*
         
         // Symbol matching
         if ((subnet = find_subnet(dn, t->symbol, t->f_type)) != NULL) {
-            _match(subnet, subject, t->next, subst_vector, matches);
+            _match(subnet, t->next, subst_vector, matches);
         }
 
         void** subnet_data = vector_data(dn->subnets);
@@ -144,8 +147,9 @@ void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector*
             newSubst.to = t->symbol;
             vector_push_back(subst_vector, &newSubst);
 
-            _match(subnet, subject, t->next, subst_vector, matches);
+            _match(subnet, t->skip, subst_vector, matches);
             vector_pop_back(subst_vector, NULL);
+            _match(subnet, subject, t->next, subst_vector, matches);
 
             if (subnet->m_type == MT_STAR) {
                 subst newSubst;
@@ -153,17 +157,18 @@ void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector*
                 newSubst.to = "#";
                 vector_push_back(subst_vector, &newSubst);
 
-                _match(subnet, subject, t, subst_vector, matches);
+                _match(subnet, t, subst_vector, matches);
                 vector_pop_back(subst_vector, NULL);
             }
 
             if (t->parent != NULL) { //Has a parent
                 if (subnet->m_type == MT_SEQUENCE || subnet->m_type == MT_STAR) {
-                    term* vp = t->parent;
-                    term* tEnd = t->next;
+                    //j = sista argumentet.
+                    subjectFlatterm* vp = t->parent;
+                    subjectFlatterm* tEnd = t->next;
                     char strBuffer[1024] = ""; //TODO lazy.
                     strcat(strBuffer, t->symbol);
-                    while (tEnd != vp->end->next) {
+                    while (tEnd != vp->skip) {
                         strcat(strBuffer, ", ");
                         strcat(strBuffer, tEnd->symbol);
                         // t = slå ihop allt mellan nuvarande term och i
@@ -173,9 +178,10 @@ void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector*
                         newSubst.to = strBuffer;
                         vector_push_back(subst_vector, &newSubst);
 
-                        _match(subnet, subject, tEnd->end->next, subst_vector, matches);
+                        _match(subnet, tEnd->skip, subst_vector, matches);
                         vector_pop_back(subst_vector, NULL);
-                        tEnd = tEnd->end->next;
+                        tEnd = tEnd->skip;
+
                     }
                 }
             }
@@ -183,10 +189,11 @@ void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector*
     }
 }
 
-vector* pattern_match(d_net* dn, flatterm* subject) {
+
+vector* pattern_match(d_net* dn, subjectFlatterm* subject) {
     vector* matches = vector_init();
     vector* subst_vector = vector_init();
-    _match(dn, subject, flatterm_first(subject), subst_vector, matches);
+    _match(dn, subject, subst_vector, matches);
     vector_free(subst_vector, NULL);
     return matches;
 }

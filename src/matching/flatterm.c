@@ -18,6 +18,18 @@ flatterm* flatterm_init() {
     return ft;
 }
 
+flatterm* flatterm_init_complete(term* first, term* end) {
+    flatterm* ft = calloc(1, sizeof(flatterm));
+    if (!ft) {
+        perror("flatterm");
+        exit(errno);
+    }
+
+    ft->first = first;
+    ft->end = end;
+    return ft;
+}
+
 term* flatterm_push_back(flatterm* ft) {
     term* t = calloc(1, sizeof(term));
     if (!t) {
@@ -65,7 +77,11 @@ void flatterm_free(flatterm* ft) {
 void flatterm_print(flatterm* ft) {
     term* t = flatterm_first(ft);
     while (t) {
-        printf("Symbol: %s, type: %s, matching: %s, end-sym: %s\n", t->symbol, (t->f_type ? "prefix" : "symbol"), (t->m_type ? "variable" : "constant"), t->end->symbol);
+        //printf("Symbol: %s, type: %s, matching: %s, end-sym: %s\n", t->symbol, (t->f_type ? "prefix" : "symbol"), (t->m_type ? "variable" : "constant"), t->end->symbol);
+        fprintf(stderr, "Symbol: %s,", t->symbol);
+        fprintf(stderr, "type: %s, ", (t->f_type ? "prefix" : "symbol"));
+        fprintf(stderr, "matching: %s, ", (t->m_type ? "variable" : "constant"));
+        fprintf(stderr, "end-sym: %s\n", t->end->symbol);
         t = t->next;
     }
 }
