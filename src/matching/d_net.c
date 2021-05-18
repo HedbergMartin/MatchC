@@ -50,7 +50,7 @@ d_net* find_subnet(d_net* dn, char* symbol, enum functype f_type) {
     for (int i = 0; i < vector_size(dn->subnets); i++) {
         d_net* sn = (d_net*)sn_data[i];
 
-        if (sn->m_type == MT_CONSTANT && f_type == sn->f_type) {
+        if (sn->m_type == MT_CONSTANT && f_type == sn->f_type) { 
             if (strcmp(sn->symbol, symbol) == 0) {
                 return sn;
             }
@@ -123,9 +123,10 @@ void _match(d_net* dn, subjectFlatterm* t, vector* subst_vector, vector* matches
         }
     } else {
         d_net* subnet = NULL;
+        enum functype f_type = t->next == t->skip ? FT_NOTAFUNC : FT_PREFIX; //!Need to fix this so this knows if it's a func or not
         
         // Symbol matching
-        if ((subnet = find_subnet(dn, t->symbol, t->f_type)) != NULL) {
+        if ((subnet = find_subnet(dn, t->symbol, f_type)) != NULL) {
             _match(subnet, t->next, subst_vector, matches);
         }
 
@@ -137,7 +138,7 @@ void _match(d_net* dn, subjectFlatterm* t, vector* subst_vector, vector* matches
                 continue;
             }
 
-            if (subnet->f_type != t->f_type) {
+            if (subnet->f_type != f_type) {
                 continue;
             }
             
@@ -149,7 +150,6 @@ void _match(d_net* dn, subjectFlatterm* t, vector* subst_vector, vector* matches
 
             _match(subnet, t->skip, subst_vector, matches);
             vector_pop_back(subst_vector, NULL);
-            _match(subnet, subject, t->next, subst_vector, matches);
 
             if (subnet->m_type == MT_STAR) {
                 subst newSubst;
