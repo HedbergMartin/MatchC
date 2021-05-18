@@ -137,7 +137,6 @@ term* _parseInfix(const char str[], int *index, term* term1, char* name, term** 
     newParent->f_type = FT_PREFIX;
     newParent->argno = 2;
     newParent->m_type = MT_CONSTANT;
-    //newParent->prev = term1->prev;
     newParent->next = term1;
 
     int nameLen = strlen(name);
@@ -145,9 +144,6 @@ term* _parseInfix(const char str[], int *index, term* term1, char* name, term** 
     memcpy(newParent->symbol, name, nameLen);
     newParent->symbol[nameLen] = '\0';
 
-    /*if (newParent->prev != NULL) {
-        newParent->prev->next = newParent;
-    }*/
     term* term2 = _parseNextTerm(str, index , term1, newParent);
 
     //!Need to handle this error
@@ -184,7 +180,7 @@ term* _parseInfix(const char str[], int *index, term* term1, char* name, term** 
 flatterm* flatify(term* first) {
     term* last = first;
     fprintf(stderr, "last: %s\n", last->symbol);
-    //fprintf(stderr, "%d\n", first);
+
     //Backing up
     while (last->next != NULL) {        
         last = last->next;
@@ -289,49 +285,3 @@ flatterm* parsePattern(const char str[]) {
     }
     return flatify(first);
 }
-
-/*
-int _parseFunction(const char str[], term* parent, int start) {
-    int i = 0;
-    int nameStart = start;
-    int nameEnd = start;
-    term* prev = parent;
-
-    while (str[i] != '\0') {
-
-        while (!isSpecialCharacter(str[i])) {
-            i += 1;
-        }
-        nameEnd = i;
-        term* t = term_create(prev, parent);
-
-        t->symbol = parse_name(str, nameStart, nameEnd);
-
-        if (t->symbol == NULL) {
-            fprintf(stderr, "Invalid name for term\n");
-        }
-
-        switch(str[i]) {
-            case '[':
-                i = _parseFunction(str, t, i + 1);
-                
-                if (parent != NULL) {
-                    parent->end = t;
-                }
-                break;
-            case ']':
-                return i + 1;
-            case ',':
-                t->end = t;
-                break;
-            case '+': //fallthrough
-                
-            case '-': //fallthrough
-            case '*': //fallthrough
-            case '/': //fallthrough
-
-                break;
-        }
-    }
-    fprintf(stderr, "Invalid ending to function\n");
-}*/
