@@ -138,17 +138,19 @@ void _match(d_net* dn, subjectFlatterm* t, vector* subst_vector, vector* matches
                 continue;
             }
 
-            if (subnet->f_type != f_type) {
-                continue;
-            }
-            
-            // Variable substitution matching, replace whole term.
             subst newSubst;
             newSubst.from = subnet->symbol;
             newSubst.to = t->symbol;
             vector_push_back(subst_vector, &newSubst);
 
-            _match(subnet, t->skip, subst_vector, matches);
+            if (f_type == FT_PREFIX && subnet->m_type == MT_VARIABLE && subnet->f_type == FT_PREFIX) {
+                // Matching generic function name
+                _match(subnet, t->next, subst_vector, matches);
+            } else {
+                // Variable substitution matching, replace whole term.
+                _match(subnet, t->skip, subst_vector, matches);
+            }
+
             vector_pop_back(subst_vector, NULL);
 
             if (subnet->m_type == MT_STAR) {
