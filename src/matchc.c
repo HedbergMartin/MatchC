@@ -6,20 +6,22 @@
 
 int main(int argc, char* argv[]) {
 
-	//d_net* net = net_init();
+	d_net* net = net_init();
 
-	subjectFlatterm* ft_subject = parse_subject("f[  p  ,   b  [qasd   [ 3 ], a], c, 1]");
+	//subjectFlatterm* ft_subject = parse_subject("f[  p  ,   b  [qasd   [ 3 ], a], c, 1]");
+	subjectFlatterm* ft_subject = parse_subject("f[2, c]");
 	//flatterm* ft = parsePattern("f[a_,b_[q[a_], t_],c_ + p_, d_] := x");
-	flatterm* ft = parsePattern("f[p_[c[]], t_ + 4 * d] := x");
+	//flatterm* ft = parsePattern("f[p_[c[]], t_ + 4 * d] := x");
+	flatterm* ft = parsePattern("f[x_, p] := x");
 	flatterm_print(ft);
 	fprintf(stderr, "done\n");
 	//add_pattern(net, parsePattern("f[x___, y__] := x"));
-	/*add_pattern(net, ft);
+	add_pattern(net, ft);
 	// add_pattern(net, parsePattern("f(2, a_) := x"));
 	printf("Net: \n");
 	print_net(net);
 	printf("-----\nMatches:\n");
-	pattern_match(net, ft_subject);*/
+	pattern_match(net, ft_subject);
 	// debugPattern(str);
 	// str = "f_(x_) := x";
 	// debugPattern(str);
