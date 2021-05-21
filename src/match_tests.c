@@ -1,44 +1,58 @@
 #include "ihct.h"
 #include "d_net.h"
+#include "parser.h"
+#include "string.h"
+#include "stdio.h"
 
-IHCT_TEST(arithmetic_addition_basic) {
-    IHCT_ASSERT(1 + 2 == 3);
-    IHCT_ASSERT(4 + 2 == 6);
-    IHCT_ASSERT(8 + 8 == 16);
-}
-IHCT_TEST(arithmetic_addition_big) {
-    IHCT_NASSERT(1000 + 1 == 1001);
-}
-IHCT_TEST(arithmetic_multiplication) {
-    IHCT_ASSERT(1 * 3 == 4);
-}
+int test_net(char* patterns[], char* subject, char* shouldMatch[]) {
+	subjectFlatterm* ft_subject = parse_subject(subject);
+	d_net* net = net_init();
 
-IHCT_TEST(timeout_slow) {
-    for(;;) {
-        int i = 1;
+    int i = 0;
+    while (patterns[i] != NULL) {
+        flatterm* ft = parsePattern(patterns[i]);
+        add_pattern(net, ft);
+        i++;
     }
+	
+	vector* matches = pattern_match(net, ft_subject);
+
+    int res = 0;
+	for (i = 0; i < vector_size(matches); i++) {
+        char* m = (char*)vector_at(matches, i);
+        // printf("%s == %s\n", shouldMatch[i], m);
+        if (strcmp(shouldMatch[i], m) != 0) {
+            res = 1;
+            break;
+        }
+	}
+
+	vector_free(matches, free);
+    return res;
 }
 
-IHCT_TEST(sigsegv_test) {
-    int *p = NULL;
-    *p = 3;
+IHCT_TEST(variable_match) {
+    char* patterns[] = {"f[x_]", NULL};
+    char* matches[] = {"(x_ -> 2) ", NULL}; //Remember trailing whitespace
+
+    IHCT_ASSERT(test_net(patterns, "f[2]", matches) == 0);
 }
 
-IHCT_TEST(strings_basic) {
-    IHCT_ASSERT_STR("abba", "abba");
-    IHCT_NASSERT_STR("Alfa", "adolf");
+IHCT_TEST(variable_function_match) {
+    char* patterns[] = {"f[x_]", NULL};
+    char* matches[] = {"(x_ -> g) ", NULL}; //Remember trailing whitespace
+
+    IHCT_ASSERT(test_net(patterns, "f[g[h[]]]", matches) == 0);
 }
 
-IHCT_TEST(strings_invalid) {
-    IHCT_ASSERT_STR("Evil", "Good"); // should fail.
-}
+IHCT_TEST(sequence_match) {
+    char* patterns[] = {"f[x___, y___]", NULL};
+    char* matches[] = { "(x___ -> #) (y___ -> a, b, c) ", 
+                        "(x___ -> a) (y___ -> b, c) ", 
+                        "(x___ -> a, b) (y___ -> c) ", 
+                        "(x___ -> a, b, c) (y___ -> #) ", NULL}; //Remember trailing whitespace
 
-IHCT_TEST(strings_more) {
-    IHCT_ASSERT_STR("aaa", "aaa");
-    IHCT_ASSERT_STR("bbb", "bbb");
-    IHCT_ASSERT_STR("ccc", "ccc");
-    IHCT_ASSERT_STR("ddd", "ddd");
-    IHCT_ASSERT_STR("eee", "eee");
+    IHCT_ASSERT(test_net(patterns, "f[a, b, c]", matches) == 0);
 }
 
 int main(int argc, char **argv) {

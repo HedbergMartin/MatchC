@@ -111,11 +111,11 @@ void _match(d_net* dn, subjectFlatterm* t, vector* subst_vector, vector* matches
         if (dn->matchId != 0) {
             char* matchString = malloc(1024 * sizeof(char)); //TODO improve
             char buffer[30];
-            sprintf(buffer, "Match! ID: %d,", dn->matchId);
-            strcat(matchString, buffer);
+            //sprintf(buffer, "Match! ID: %d,", dn->matchId);
+            //strcat(matchString, buffer);
             for (int i = 0; i < vector_size(subst_vector); i++) {
                 subst* s = vector_at(subst_vector, i);
-                sprintf(buffer, " (%s -> %s)", s->from, s->to);
+                sprintf(buffer, "(%s -> %s) ", s->from, s->to);
                 strcat(matchString, buffer);
             }
 

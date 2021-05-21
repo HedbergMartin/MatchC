@@ -179,12 +179,12 @@ term* _parseInfix(const char str[], int *index, term* term1, char* name, term** 
 
 flatterm* flatify(term* first) {
     term* last = first;
-    fprintf(stderr, "last: %s\n", last->symbol);
+    //fprintf(stderr, "last: %s\n", last->symbol);
 
     //Backing up
     while (last->next != NULL) {        
         last = last->next;
-        fprintf(stderr, "last: %s\n", last->symbol);
+        //fprintf(stderr, "last: %s\n", last->symbol);
     }
     flatterm* ft = flatterm_init_complete(first, last);
     return ft;
