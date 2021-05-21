@@ -138,6 +138,16 @@ void _match(d_net* dn, subjectFlatterm* t, vector* subst_vector, vector* matches
                 continue;
             }
 
+            if (subnet->m_type == MT_STAR) {
+                subst newSubst;
+                newSubst.from = subnet->symbol;
+                newSubst.to = "#";
+                vector_push_back(subst_vector, &newSubst);
+
+                _match(subnet, t, subst_vector, matches);
+                vector_pop_back(subst_vector, NULL);
+            }
+
             subst newSubst;
             newSubst.from = subnet->symbol;
             newSubst.to = t->symbol;
@@ -153,21 +163,11 @@ void _match(d_net* dn, subjectFlatterm* t, vector* subst_vector, vector* matches
 
             vector_pop_back(subst_vector, NULL);
 
-            if (subnet->m_type == MT_STAR) {
-                subst newSubst;
-                newSubst.from = subnet->symbol;
-                newSubst.to = "#";
-                vector_push_back(subst_vector, &newSubst);
-
-                _match(subnet, t, subst_vector, matches);
-                vector_pop_back(subst_vector, NULL);
-            }
-
             if (t->parent != NULL) { //Has a parent
                 if (subnet->m_type == MT_SEQUENCE || subnet->m_type == MT_STAR) {
                     //j = sista argumentet.
                     subjectFlatterm* vp = t->parent;
-                    subjectFlatterm* tEnd = t->next;
+                    subjectFlatterm* tEnd = t->skip;
                     char strBuffer[1024] = ""; //TODO lazy.
                     strcat(strBuffer, t->symbol);
                     while (tEnd != vp->skip) {
