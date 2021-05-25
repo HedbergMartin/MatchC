@@ -98,13 +98,7 @@ void print_net(d_net* dn) {
 }
 
 /**
- * @brief 
- * 
- * @param patternSymbol 
- * @param sf 
- * @param sfLen 
- * @param subst_vector 
- * @return int 0 for invalid, 1 for existing, 2 for new
+ * return int 0 for invalid, 1 for existing, 2 for new
  */
 int is_valid_match(char* patternSymbol, subjectFlatterm* sf, int sfLen, s_vector* subst_vector) {
     int foundValid = 2;
