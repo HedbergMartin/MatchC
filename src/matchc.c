@@ -27,7 +27,17 @@ int main(int argc, char* argv[]) {
 	vector* matches = pattern_match(net, ft_subject);
 
 	for (int i = 0; i < vector_size(matches); i++) {
-		printf("%s\n", (char*)vector_at(matches, i));
+		net_match* match = (net_match*)vector_at(matches, i);
+		printf("MatchID: %d\n", match->matchid);
+		for (int i = 0; i < match->subst_amount; i++) {
+			s_entry* su = &(match->substitutions[i]);
+			printf("From: %s, To: ", su->from);
+			for (int j = 0; j < su->len; j++) {
+				subjectFlatterm* ft = &(su->to[j]);
+				printf("%s", ft->symbol);
+			}
+			printf("\n");
+		}
 	}
 
 	vector_free(matches, free);

@@ -4,18 +4,15 @@
 #include "flatterm.h"
 #include "subjectFlatterm.h"
 #include "vector.h"
+#include "s_vector.h"
 
 typedef struct d_net d_net;
 
-typedef struct match {
-    char* expr;
-    flatterm* substitutions;
-} match;
-
-typedef struct subst {
-    char* from;
-    char* to;
-} subst;
+typedef struct net_match {
+    int matchid;
+    s_entry* substitutions;
+    int subst_amount;
+} net_match;
 
 d_net* net_init();
 void add_pattern(d_net* dn, flatterm* ft);
