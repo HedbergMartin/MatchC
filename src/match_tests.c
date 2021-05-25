@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "string.h"
 #include "stdio.h"
+#include "time.h"
 #include <stdarg.h>
 
 net_match* create_match(int id, s_vector* v) {
@@ -117,6 +118,8 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
 	vector* matches = pattern_match(net, ft_subject);
 
     if (vector_size(matches) != vector_size(refmatches)) {
+
+        fprintf(stderr, "miss match on matches: %ld vs refmatches: %ld\n", vector_size(matches), vector_size(refmatches));
         vector_free(matches, free);
         return 1;
     }
@@ -125,7 +128,6 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
 
 	for (int i = 0; i < vector_size(matches); i++) {
 		net_match* match = (net_match*)vector_at(matches, i);
-		
 	}
 	// for (i = 0; i < vector_size(matches); i++) {
     //     char* m = (char*)vector_at(matches, i);
@@ -140,23 +142,32 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
     return res;
 }
 
-void load_patterns(char* filename, d_net* net ) {
-    int MAXCHAR = 2000;
+void load_patterns(char* filename, d_net* net, double* parseTime, double* addTime ) {
+    int MAXCHAR = 10000;
     FILE *fp;
     char str[MAXCHAR];
 
     fp = fopen(filename, "r");
+    clock_t startParsePattern;
+    clock_t endParsePattern;
+    clock_t startAddPattern;
+    clock_t endAddPattern;
     if (fp == NULL){
         fprintf(stderr, "Could not open file %s",filename);
     } else {
         int i = 0;
         while (fgets(str, MAXCHAR, fp) != NULL) {
+            startParsePattern = clock();
             flatterm* ft = parsePattern(str);
-
+            endParsePattern = clock();
+            *parseTime += (double)(endParsePattern - startParsePattern) / CLOCKS_PER_SEC;
             if (ft == NULL) {
                 fprintf(stderr, "Error on line: %d\n ", i);
             } else {
+                startAddPattern = clock();
                 add_pattern(net, ft);
+                endAddPattern = clock();
+                *addTime += (double)(endAddPattern - startAddPattern) / CLOCKS_PER_SEC;
             }
             //printf("%s", str);
             i += 1;
@@ -165,11 +176,13 @@ void load_patterns(char* filename, d_net* net ) {
     }    
 }
 
-void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount) {
-    int MAXCHAR = 2000;
+void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount, double* parseTime) {
+    int MAXCHAR = 5000;
     FILE *fp;
     char str[MAXCHAR];
 
+    clock_t startParseSubject;
+    clock_t endParseSubject;
     fp = fopen(filename, "r");
     if (fp == NULL){
         fprintf(stderr, "Could not open file %s",filename);
@@ -180,7 +193,10 @@ void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount)
             if (i >= subjectCount) {
                 break;
             }
+            startParseSubject = clock();
             subjectFlatterm* sf = parse_subject(str);
+            endParseSubject = clock();
+            *parseTime += (double)(endParseSubject - startParseSubject) / CLOCKS_PER_SEC;
 
             if (sf == NULL) {
                 fprintf(stderr, "Error on line: %d\n ", i);
@@ -203,41 +219,55 @@ void test_free(void* var) {
 
 IHCT_TEST(perf_test) {
     
-    char* filenamePatterns = "../../patterns.txt";
-    char* filenameSubjects = "../../subjects.txt";
+    char* filenamePatterns = "../../patterns_100000.txt";
+    char* filenameSubjects = "../../subjects_10000.txt";
     d_net* net = net_init();
     int subjectCount = 1000;
- 
-    load_patterns(filenamePatterns, net);
 
-    /*printf("Net: \n");
-	print_net(net);*/
+    double timeParsePattern = 0;
+    double timeAddPattern = 0;
+    double timeParseSubject = 0;
+    double timeMatch = 0;
+
+    clock_t matchStart;
+    clock_t matchEnd;
+ 
+    load_patterns(filenamePatterns, net, &timeParsePattern, &timeAddPattern);
+
 
     subjectFlatterm** subjects = malloc(sizeof(subjectFlatterm) * (subjectCount+1) );
-    load_subjects(filenameSubjects, subjects, subjectCount);
+    load_subjects(filenameSubjects, subjects, subjectCount, &timeParseSubject);
 
     for (int i = 0; i < subjectCount; i++) {
-        fprintf(stderr, "i: %d\n", i);
-        print_subjectFlatterm(subjects[i]);
-        printf("-----\nMatches:\n");
+        //fprintf(stderr, "i: %d\n", i);
+        //print_subjectFlatterm(subjects[i]);
+        //printf("-----\nMatches:\n");
+        matchStart = clock();
         vector* matches = pattern_match(net, subjects[i]);
+        matchEnd = clock();
+        timeMatch += (double)(matchEnd - matchStart) / CLOCKS_PER_SEC;
 
-        for (int i = 0; i < vector_size(matches); i++) {
-            net_match* match = (net_match*)vector_at(matches, i);
-            printf("MatchID: %d\n", match->matchid);
-            for (int i = 0; i < match->subst_amount; i++) {
-                s_entry* su = &(match->substitutions[i]);
-                printf("From: %s, To: ", su->from);
-                subjectFlatterm* ft = su->to;
-                for (int j = 0; j < su->len; j++) {
-                    printf("%s, ", ft->symbol);
-                    ft = ft->skip;
-                }
-                printf("\n");
-            }
-        }
+        // for (int i = 0; i < vector_size(matches); i++) {
+        //     net_match* match = (net_match*)vector_at(matches, i);
+        //     printf("MatchID: %d\n", match->matchid);
+        //     for (int i = 0; i < match->subst_amount; i++) {
+        //         s_entry* su = &(match->substitutions[i]);
+        //         printf("From: %s, To: ", su->from);
+        //         subjectFlatterm* ft = su->to;
+        //         for (int j = 0; j < su->len; j++) {
+        //             printf("%s, ", ft->symbol);
+        //             ft = ft->skip;
+        //         }
+        //         printf("\n");
+        //     }
+        // }
         vector_free(matches, test_free);
     }
+
+    fprintf(stderr, "timeParsePattern: %f\n", timeParsePattern);
+    fprintf(stderr, "timeAddPattern: %f\n", timeAddPattern);
+    fprintf(stderr, "timeParseSubject: %f\n", timeParseSubject);
+    fprintf(stderr, "timeMatch: %f\n", timeMatch);
 
     IHCT_ASSERT(0 == 0);
     net_free(net);
@@ -249,7 +279,7 @@ IHCT_TEST(perf_test) {
     free(subjects);
 }
 
-/*IHCT_TEST(variable_match) {
+IHCT_TEST(variable_match) {
     char* patterns[] = {"f[x_]", NULL};
     s_vector* sus = s_vector_init();
     add_subst(sus, "x_", 1, "2");
@@ -259,6 +289,43 @@ IHCT_TEST(perf_test) {
     vector_push_back(matches, new_match);
 
     IHCT_ASSERT(test_net(patterns, "f[2]", matches, false) == 0);
+}
+
+IHCT_TEST(variable_repeating_match) {
+    char* patterns[] = {"f[x_, x_]", NULL};
+    s_vector* sus = s_vector_init();
+    add_subst(sus, "x_", 1, "2");
+    net_match* new_match = create_match(1, sus);
+
+    vector* matches = vector_init();
+    vector_push_back(matches, new_match);
+
+    IHCT_ASSERT(test_net(patterns, "f[2, 2]", matches, false) == 0);
+}
+
+IHCT_TEST(variable_repeating_not_match1) {
+    char* patterns[] = {"f[x_, x_]", NULL};
+    s_vector* sus = s_vector_init();
+    add_subst(sus, "x_", 1, "2");
+    add_subst(sus, "x_", 1, "3");
+    net_match* new_match = create_match(1, sus);
+
+    vector* matches = vector_init();
+    vector_push_back(matches, new_match);
+
+    IHCT_ASSERT(test_net(patterns, "f[2, 3]", matches, false) == 1);
+}
+
+IHCT_TEST(variable_repeating_not_match2) {
+    char* patterns[] = {"f[x_, x_]", NULL};
+    s_vector* sus = s_vector_init();
+    add_subst(sus, "x_", 1, "2");
+    net_match* new_match = create_match(1, sus);
+
+    vector* matches = vector_init();
+    vector_push_back(matches, new_match);
+
+    IHCT_ASSERT(test_net(patterns, "f[2, 3]", matches, false) == 1);
 }
 
 IHCT_TEST(variable_function_match) {
@@ -300,7 +367,7 @@ IHCT_TEST(sequence_match) {
     s_vector_clear(sus);
 
     IHCT_ASSERT(test_net(patterns, "f[a, b, c]", matches, false) == 0);
-}*/
+}
 
 int main(int argc, char **argv) {
     return IHCT_RUN(argc, argv);

@@ -111,7 +111,7 @@ struct subjectFlatterm* parse_subject(char* subject) {
     int index = 0;
     subjectFlatterm* first = _parse_subject(subject, NULL, &index);
 
-    fprintf(stderr, "Subject: %s\n", subject);
+    //fprintf(stderr, "Subject: %s\n", subject);
 
     while (first->parent != NULL) {
         first = first->parent;

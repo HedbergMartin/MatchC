@@ -1,6 +1,7 @@
 #include "d_net.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 struct d_net {
     char* symbol;
@@ -96,6 +97,57 @@ void print_net(d_net* dn) {
     }
 }
 
+/**
+ * @brief 
+ * 
+ * @param patternSymbol 
+ * @param sf 
+ * @param sfLen 
+ * @param subst_vector 
+ * @return int 0 for invalid, 1 for existing, 2 for new
+ */
+int is_valid_match(char* patternSymbol, subjectFlatterm* sf, int sfLen, s_vector* subst_vector) {
+    int foundValid = 2;
+
+    for (size_t i = 0; i < s_vector_size(subst_vector); i++) {
+        s_entry* entry = s_vector_at(subst_vector, i);
+        
+        if (strcmp(patternSymbol, entry->from) == 0) {
+            //fprintf(stderr, "found match on patternSymbol: %s vs entry->from: %s\n", patternSymbol, entry->from);
+            //fprintf(stderr, "sf for %s has len %d vs entry->sf for %s has len %d\n", patternSymbol,sfLen, entry->from, entry->len);
+            foundValid = 0;
+
+            if (entry->len == sfLen) {
+                subjectFlatterm* entrySf = entry->to;
+                bool invalid = false;
+
+                for (size_t i = 0; i < sfLen; i++) {
+                    
+                    if (sf == NULL || entrySf == NULL) {
+                        //fprintf(stderr, "sf: %p and entrySf: %p\n", sf, entrySf);
+                        invalid = true;
+                        break;
+                    } else {
+
+                        if (strcmp(entrySf->symbol, sf->symbol) != 0) {
+                            //fprintf(stderr, "subjectSymbol not same, entrySf: %s vs sf: %s\n", entrySf->symbol, sf->symbol);
+                            invalid = true;
+                        }
+                    }
+                    sf = sf->next;
+                    entrySf = entrySf->next;
+                }
+                
+                if (invalid == false) {
+                    foundValid = 1;
+                }
+            }
+            break;
+        }
+    }
+    return foundValid;
+}
+
 
 void _match(d_net* dn, subjectFlatterm* t, s_vector* subst_vector, vector* matches) {
 //void _match(d_net* dn, flatterm* subject, term* t, vector* subst_vector, vector* matches) {
@@ -105,10 +157,20 @@ void _match(d_net* dn, subjectFlatterm* t, s_vector* subst_vector, vector* match
         for (int i = 0; i < vector_size(dn->subnets); i++) {
             subnet = (d_net*)subnet_data[i];
             if (subnet->m_type == MT_STAR) {
-                s_vector_push_back(subst_vector, subnet->symbol, NULL, 0);
 
-                _match(subnet, t, subst_vector, matches);
-                s_vector_pop_back(subst_vector);
+                switch (is_valid_match(subnet->symbol, NULL, 0, subst_vector)) {
+                case 1:
+                    _match(subnet, t, subst_vector, matches);
+                    break;
+                case 2:
+                    s_vector_push_back(subst_vector, subnet->symbol, NULL, 0);
+
+                    _match(subnet, t, subst_vector, matches);
+                    s_vector_pop_back(subst_vector);
+                    break;
+                case 0: //invalid match;
+                    break;
+                }
             }
         }
 
@@ -136,24 +198,49 @@ void _match(d_net* dn, subjectFlatterm* t, s_vector* subst_vector, vector* match
             }
 
             if (subnet->m_type == MT_STAR) {
-                s_vector_push_back(subst_vector, subnet->symbol, NULL, 0);
 
-                _match(subnet, t, subst_vector, matches);
+                switch (is_valid_match(subnet->symbol, NULL, 0, subst_vector)) {
+                case 1:
+                    _match(subnet, t, subst_vector, matches);
+                    break;
+                case 2:
+                    s_vector_push_back(subst_vector, subnet->symbol, NULL, 0);
+
+                    _match(subnet, t, subst_vector, matches);
+                    s_vector_pop_back(subst_vector);
+                    break;
+                case 0: //invalid match;
+                    break;
+                }
+            }
+
+            switch (is_valid_match(subnet->symbol, t, 1, subst_vector)) {
+            case 1:
+                if (f_type == FT_PREFIX && subnet->m_type == MT_VARIABLE && subnet->f_type == FT_PREFIX) {
+                    // Matching generic function name
+                    _match(subnet, t->next, subst_vector, matches);
+                } else {
+                    // Variable substitution matching, replace whole term.
+                    _match(subnet, t->skip, subst_vector, matches);
+                }
+                break;
+            case 2:
+                s_vector_push_back(subst_vector, subnet->symbol, t, 1);
+
+                if (f_type == FT_PREFIX && subnet->m_type == MT_VARIABLE && subnet->f_type == FT_PREFIX) {
+                    // Matching generic function name
+                    _match(subnet, t->next, subst_vector, matches);
+                } else {
+                    // Variable substitution matching, replace whole term.
+                    _match(subnet, t->skip, subst_vector, matches);
+                }
+
                 s_vector_pop_back(subst_vector);
+                break;
+            case 0: //invalid match;
+                break;
             }
-
-            s_vector_push_back(subst_vector, subnet->symbol, t, 1);
-
-            if (f_type == FT_PREFIX && subnet->m_type == MT_VARIABLE && subnet->f_type == FT_PREFIX) {
-                // Matching generic function name
-                _match(subnet, t->next, subst_vector, matches);
-            } else {
-                // Variable substitution matching, replace whole term.
-                _match(subnet, t->skip, subst_vector, matches);
-            }
-
-            s_vector_pop_back(subst_vector);
-
+            
             if (t->parent != NULL) { //Has a parent
                 if (subnet->m_type == MT_SEQUENCE || subnet->m_type == MT_STAR) {
                     //j = sista argumentet.
@@ -163,10 +250,19 @@ void _match(d_net* dn, subjectFlatterm* t, s_vector* subst_vector, vector* match
                     while (tEnd != vp->skip) {
                         // t = slå ihop allt mellan nuvarande term och i
                         //matcha med den substitutionen
-                        s_vector_push_back(subst_vector, subnet->symbol, t, len);
+                        switch (is_valid_match(subnet->symbol, t, len, subst_vector)) {
+                        case 1:
+                            _match(subnet, tEnd->skip, subst_vector, matches);
+                            break;
+                        case 2:
+                            s_vector_push_back(subst_vector, subnet->symbol, t, len);
 
-                        _match(subnet, tEnd->skip, subst_vector, matches);
-                        s_vector_pop_back(subst_vector);
+                            _match(subnet, tEnd->skip, subst_vector, matches);
+                            s_vector_pop_back(subst_vector);
+                            break;
+                        case 0: //invalid match;
+                            break;
+                        }
                         tEnd = tEnd->skip;
                         len++;
 

@@ -111,7 +111,10 @@ term* _parseNextTerm(const char str[], int *index, term* prev, term* parent) {
     t->symbol = parsePatternName(str, nameStart, nameEnd, t);
 
     if (t->symbol == NULL) {
-        prev->next = NULL;
+
+        if (prev != NULL) {
+            prev->next = NULL;
+        }
         free(t);
         return NULL;
     }
@@ -221,7 +224,7 @@ flatterm* parsePattern(const char str[]) {
             case ']':
 
                 if (parent == NULL) {
-                    fprintf(stderr, "Invalid ']' before '['\n");
+                    fprintf(stderr, "Invalid ']' before '[' in %s\n", str);
                     return NULL;
                 }
                 if (current != NULL) {
@@ -236,7 +239,7 @@ flatterm* parsePattern(const char str[]) {
             case ',':
 
                 if (parent == NULL) {
-                    fprintf(stderr, "Invalid ',' before '['\n");
+                    fprintf(stderr, "Invalid ',' before '[' in %s\n", str);
                     return NULL;
                 }
                 if (current != NULL) {
