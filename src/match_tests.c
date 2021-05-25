@@ -76,7 +76,7 @@ int valid_match(net_match* match, vector* refmatches, int debug) {
         net_match* refMatch = (net_match*)vector_at(refmatches, i);
 
         if (debug) {
-            fprintf(str, "MatchID: %d(%d)\n", match->matchid, refMatch->matchid);
+            //fprintf(str, "MatchID: %d(%d)\n", match->matchid, refMatch->matchid);
         }
 
         if (match->matchid != refMatch->matchid) {
@@ -92,7 +92,7 @@ int valid_match(net_match* match, vector* refmatches, int debug) {
             }
             
             if (debug) {
-                fprintf(str, "\n");
+                //fprintf(str, "\n");
             }
         }
         
@@ -140,7 +140,116 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
     return res;
 }
 
-IHCT_TEST(variable_match) {
+void load_patterns(char* filename, d_net* net ) {
+    int MAXCHAR = 2000;
+    FILE *fp;
+    char str[MAXCHAR];
+
+    fp = fopen(filename, "r");
+    if (fp == NULL){
+        fprintf(stderr, "Could not open file %s",filename);
+    } else {
+        int i = 0;
+        while (fgets(str, MAXCHAR, fp) != NULL) {
+            flatterm* ft = parsePattern(str);
+
+            if (ft == NULL) {
+                fprintf(stderr, "Error on line: %d\n ", i);
+            } else {
+                add_pattern(net, ft);
+            }
+            //printf("%s", str);
+            i += 1;
+        }
+        fclose(fp);
+    }    
+}
+
+void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount) {
+    int MAXCHAR = 2000;
+    FILE *fp;
+    char str[MAXCHAR];
+
+    fp = fopen(filename, "r");
+    if (fp == NULL){
+        fprintf(stderr, "Could not open file %s",filename);
+    } else {
+        int i = 0;
+        while (fgets(str, MAXCHAR, fp) != NULL) {
+
+            if (i >= subjectCount) {
+                break;
+            }
+            subjectFlatterm* sf = parse_subject(str);
+
+            if (sf == NULL) {
+                fprintf(stderr, "Error on line: %d\n ", i);
+            } else {
+                subjects[i] = sf;
+                /*print_subjectFlatterm(sf);
+                fprintf(stderr, "Successfully parsed line: %d\n", i);*/
+            }
+            i += 1;
+        }
+        fclose(fp);
+    }    
+}
+
+void test_free(void* var) {
+    net_match* match = (net_match*)var;
+    free(match->substitutions);
+    free(match);
+}
+
+IHCT_TEST(perf_test) {
+    
+    char* filenamePatterns = "../../patterns.txt";
+    char* filenameSubjects = "../../subjects.txt";
+    d_net* net = net_init();
+    int subjectCount = 1000;
+ 
+    load_patterns(filenamePatterns, net);
+
+    /*printf("Net: \n");
+	print_net(net);*/
+
+    subjectFlatterm** subjects = malloc(sizeof(subjectFlatterm) * (subjectCount+1) );
+    load_subjects(filenameSubjects, subjects, subjectCount);
+
+    for (int i = 0; i < subjectCount; i++) {
+        fprintf(stderr, "i: %d\n", i);
+        print_subjectFlatterm(subjects[i]);
+        printf("-----\nMatches:\n");
+        vector* matches = pattern_match(net, subjects[i]);
+
+        for (int i = 0; i < vector_size(matches); i++) {
+            net_match* match = (net_match*)vector_at(matches, i);
+            printf("MatchID: %d\n", match->matchid);
+            for (int i = 0; i < match->subst_amount; i++) {
+                s_entry* su = &(match->substitutions[i]);
+                printf("From: %s, To: ", su->from);
+                subjectFlatterm* ft = su->to;
+                for (int j = 0; j < su->len; j++) {
+                    printf("%s, ", ft->symbol);
+                    ft = ft->skip;
+                }
+                printf("\n");
+            }
+        }
+        vector_free(matches, test_free);
+    }
+
+    IHCT_ASSERT(0 == 0);
+    net_free(net);
+
+    for (int i = 0; i < subjectCount; i++) {
+
+        subjectFlatterm_free(subjects[i]);
+    }
+    free(subjects);
+}
+
+/*IHCT_TEST(variable_match) {
     char* patterns[] = {"f[x_]", NULL};
     s_vector* sus = s_vector_init();
     add_subst(sus, "x_", 1, "2");
@@ -191,7 +300,7 @@ IHCT_TEST(sequence_match) {
     s_vector_clear(sus);
 
     IHCT_ASSERT(test_net(patterns, "f[a, b, c]", matches, false) == 0);
-}
+}*/
 
 int main(int argc, char **argv) {
     return IHCT_RUN(argc, argv);

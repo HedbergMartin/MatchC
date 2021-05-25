@@ -21,15 +21,13 @@ struct vector {
 };
 
 vector *vector_init() {
-	vector* v = malloc(sizeof(vector));
+	vector* v = calloc(1, sizeof(vector));
 	if (!v) {
 		perror("Vector");
 		exit(1);
 	}
 
-	v->capacity = 0;
 	v->default_capacity = 10;
-	v->size = 0;
 }
 
 void vector_reserve(vector* v, size_t capacity) {
@@ -134,6 +132,8 @@ void vector_free(vector* v, free_func_callback free_func) {
 		}
 	}
 
-	free(v->data);
+	if (v->data != NULL) {
+		free(v->data);
+	}
 	free(v);
 }

@@ -18,5 +18,6 @@ d_net* net_init();
 void add_pattern(d_net* dn, flatterm* ft);
 void print_net(d_net* dn);
 vector* pattern_match(d_net* dn, subjectFlatterm* subject);
+void net_free(d_net* net);
 
 #endif

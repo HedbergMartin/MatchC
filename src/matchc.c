@@ -32,9 +32,10 @@ int main(int argc, char* argv[]) {
 		for (int i = 0; i < match->subst_amount; i++) {
 			s_entry* su = &(match->substitutions[i]);
 			printf("From: %s, To: ", su->from);
+			subjectFlatterm* ft = su->to;
 			for (int j = 0; j < su->len; j++) {
-				subjectFlatterm* ft = &(su->to[j]);
-				printf("%s", ft->symbol);
+				printf("%s, ", ft->symbol);
+				ft = ft->skip;
 			}
 			printf("\n");
 		}

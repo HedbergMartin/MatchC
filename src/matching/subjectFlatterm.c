@@ -46,8 +46,81 @@ char* parse_name(char* subject, int start, int end) {
     return name;
 }
 
+struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, int* index) {
+    int start = *index;
+    int end = *index;
+
+    struct subjectFlatterm* prev = parent;
+    bool nextIsSkip = false;
+
+    while (subject[*index] != '\0') {
+
+        if (subject[*index] == ',' || subject[*index] == '[' || subject[*index] == ']') {
+            end = *index;
+            char* name = parse_name(subject, start, end);
+            start = *index + 1;
+
+            if (name != NULL) { 
+                struct subjectFlatterm* current = new_subjectFlatterm(name);
+                current->parent = parent;
+
+                if (prev != NULL) {
+                    prev->next = current;
+                    prev->skip = current;
+                }
+
+                if (nextIsSkip) {
+                    prev->skip = current;
+                    subjectFlatterm* parentTemp = prev->parent;
+
+                    while (parentTemp != parent) {
+                        parentTemp->skip = current;
+                        parentTemp = parentTemp->parent;
+                    }
+
+                    if (parentTemp != NULL) {
+                        parentTemp->skip = current;
+                    }
+                }
+
+
+                if (subject[*index] == '[') {
+                    current->f_type = FT_PREFIX;
+                    prev = _parse_subject(subject, current, index);
+                    current->skip = NULL;
+                    nextIsSkip = true;
+                    start = *index + 1;
+                } else {
+                    prev = current;
+                }
+                
+            }
+            
+            if (subject[*index] == ']') {
+                *index += 1;
+                return prev;
+            }
+        }
+
+        *index += 1;
+    }
+    return prev;
+}
+
 struct subjectFlatterm* parse_subject(char* subject) {
     int index = 0;
+    subjectFlatterm* first = _parse_subject(subject, NULL, &index);
+
+    fprintf(stderr, "Subject: %s\n", subject);
+
+    while (first->parent != NULL) {
+        first = first->parent;
+    }
+
+    //first->skip = NULL;
+
+    return first;
+    /*int index = 0;
     int start = 0;
     int end = 0;
 
@@ -62,10 +135,17 @@ struct subjectFlatterm* parse_subject(char* subject) {
         if (subject[index] == ',' || subject[index] == '[' || subject[index] == ']') {
             end = index;
             char* name = parse_name(subject, start, end);
+            
+
+            if (skip != NULL) {
+                fprintf(stderr, "current skip: %s\n", skip->symbol);
+            }
+            
             start = index + 1;
             
             if (name != NULL) {
                 struct subjectFlatterm* current = new_subjectFlatterm(name);
+                fprintf(stderr, "name for current: %s\n", current->symbol);
                 current->parent = parent;
 
                 if (first == NULL) {
@@ -79,6 +159,7 @@ struct subjectFlatterm* parse_subject(char* subject) {
                 if (skips != 0) {
 
                     for (int i = 0; i < skips + 1; i++) {
+                        fprintf(stderr, "Skip parent = %p\n", skip);
                         skip->skip = current;
                         skip = skip->parent;
                     }
@@ -106,7 +187,7 @@ struct subjectFlatterm* parse_subject(char* subject) {
         }
         index += 1;
     }
-    return first;
+    return first;*/
 }
 
 void print_subjectFlatterm(struct subjectFlatterm* sf) {
@@ -146,4 +227,15 @@ void print_subjectFlatterm(struct subjectFlatterm* sf) {
         current = current->next;
     }
     printf("\n");
+}
+
+
+void subjectFlatterm_free(struct subjectFlatterm* ft) {
+
+    while (ft != NULL) {
+        struct subjectFlatterm* next = ft->next;
+        free(ft->symbol);
+        free(ft);
+        ft = next;
+    }
 }
