@@ -28,6 +28,7 @@ vector *vector_init() {
 	}
 
 	v->default_capacity = 10;
+	return v;
 }
 
 void vector_reserve(vector* v, size_t capacity) {

@@ -66,6 +66,7 @@ IHCT_TEST(perf_test) {
     free(subjects);
 }
 
+// Something is left un-freed...
 IHCT_TEST(variable_match) {
     char* patterns[] = {"f[x_]", NULL};
 
