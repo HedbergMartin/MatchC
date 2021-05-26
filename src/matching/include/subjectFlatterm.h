@@ -1,6 +1,7 @@
 #ifndef SUBJECTFLATTERM_H
 #define SUBJECTFLATTERM_H
 #include "flatterm.h"
+#include "hash_table_linked.h"
 
 typedef struct subjectFlatterm {
     char* symbol;
@@ -11,7 +12,7 @@ typedef struct subjectFlatterm {
     enum functype f_type;
 }subjectFlatterm;
 
-struct subjectFlatterm* parse_subject(char* subject, hash_table* subject_ht, hash_table* constant_ht);
+subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt, int nextId);
 void print_subjectFlatterm(struct subjectFlatterm* sf);
 void subjectFlatterm_free(struct subjectFlatterm* ft);
 

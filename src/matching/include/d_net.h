@@ -2,22 +2,17 @@
 #define MC_DNET
 
 #include "flatterm.h"
-#include "subjectFlatterm.h"
 #include "vector.h"
 #include "s_vector.h"
+#include "hash_table_linked.h"
 
 typedef struct d_net d_net;
-
-typedef struct net_match {
-    int matchid;
-    s_entry* substitutions;
-    int subst_amount;
-} net_match;
 
 d_net* net_init();
 void add_pattern(d_net* dn, flatterm* ft);
 void print_net(d_net* dn);
-vector* pattern_match(d_net* dn, subjectFlatterm* subject);
+vector* pattern_match(d_net* dn, char* subject);
 void net_free(d_net* net);
+hash_table* getSymbolHt(d_net* dn);
 
 #endif

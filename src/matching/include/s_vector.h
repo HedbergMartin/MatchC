@@ -5,6 +5,7 @@
 #include "flatterm.h"
 #include "subjectFlatterm.h"
 
+//TODO this is just a int vector now
 typedef struct s_vector s_vector;
 typedef struct s_entry {
     int from;

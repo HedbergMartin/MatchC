@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "subjectFlatterm.h"
+#include "hash_table_linked.h"
 
 struct subjectFlatterm* new_subjectFlatterm(char* symbol) {
     struct subjectFlatterm* sf = calloc(1, sizeof(struct subjectFlatterm));
@@ -46,7 +47,7 @@ char* parse_name(char* subject, int start, int end) {
     return name;
 }
 
-struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, int* index, hash_table* subject_ht, hash_table* constant_ht, int nextId) {
+struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, int* index, hash_table* subjectHt, hash_table* symbolHt, int nextId) {
     int start = *index;
     int end = *index;
 
@@ -61,14 +62,13 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
             start = *index + 1;
 
             if (name != NULL) { 
-                int id = get_entry(constant_ht, name);
+                int id = get_entry(symbolHt, name);
 
                 if (id == -1) {
-                    id = insert_if_absent(subject_ht, name, id, &nextId);
-                    nextId += 1;
+                    id = insert_if_absent(subjectHt, name, &nextId);
                 }
                 struct subjectFlatterm* current = new_subjectFlatterm(name);
-                current->id;
+                current->id = id;
                 current->parent = parent;
 
                 if (prev != NULL) {
@@ -93,7 +93,7 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
 
                 if (subject[*index] == '[') {
                     current->f_type = FT_PREFIX;
-                    prev = _parse_subject(subject, current, index);
+                    prev = _parse_subject(subject, current, index, subjectHt, symbolHt, nextId);
                     current->skip = NULL;
                     nextIsSkip = true;
                     start = *index + 1;
@@ -114,9 +114,12 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
     return prev;
 }
 
-struct subjectFlatterm* parse_subject(char* subject, hash_table* subject_ht, hash_table* constant_ht) {
+// symbolHt should be const here
+subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt, int nextId) {
     int index = 0;
-    subjectFlatterm* first = _parse_subject(subject, NULL, &index, subject_ht, constant_ht);
+    hash_table* subjectHt = create_hash_table(500);
+    subjectFlatterm* first = _parse_subject(subject, NULL, &index, subjectHt, symbolHt, nextId);
+    delete_hash_table(subjectHt);
 
     //fprintf(stderr, "Subject: %s\n", subject);
 
@@ -203,7 +206,7 @@ void print_subjectFlatterm(struct subjectFlatterm* sf) {
     printf("Next order: ");
 
     while (current != NULL) {
-        printf("%s, ", current->symbol);
+        printf("%s(%d), ", current->symbol, current->id);
 
         current = current->next;
     }

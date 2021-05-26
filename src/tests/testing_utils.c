@@ -5,12 +5,7 @@
 #include "string.h"
 #include "stdio.h"
 #include "time.h"
-
-net_match* create_match(int id, s_vector* v) {
-    net_match* nm = calloc(1, sizeof(net_match));
-    nm->matchid = id;
-    nm->substitutions = s_vector_copy(v, &(nm->subst_amount));
-}
+#include "match_entry.h"
 
 void add_subst(s_vector* v, char* from, int len, ...) {
     va_list args;
@@ -39,7 +34,7 @@ void add_subst(s_vector* v, char* from, int len, ...) {
     va_end(args);
 }
 
-int compare_subst(s_entry* su, s_entry* suRef, int debug) {
+int compare_subst(substitution* su, substitution* suRef, int debug) {
     if (debug) {
         printf("From: %s(%s), Len: %d(%d), To: ", su->from, suRef->from, su->len, suRef->len);
     }
@@ -70,11 +65,11 @@ int compare_subst(s_entry* su, s_entry* suRef, int debug) {
     return 1;
 }
 
-int valid_match(net_match* match, vector* refmatches, int debug) {
+int valid_match(match_entry* match, vector* refmatches, int debug) {
     char str[4096] = "";
     for (int i = 0; i < vector_size(refmatches); i++) {
         str[0] = '\0';
-        net_match* refMatch = (net_match*)vector_at(refmatches, i);
+        match_entry* refMatch = (match_entry*)vector_at(refmatches, i);
 
         if (debug) {
             //fprintf(str, "MatchID: %d(%d)\n", match->matchid, refMatch->matchid);
@@ -85,8 +80,8 @@ int valid_match(net_match* match, vector* refmatches, int debug) {
         // }
 
         for (int i = 0; i < match->subst_amount; i++) {
-            s_entry* su = &(match->substitutions[i]);
-            s_entry* suRef = &(refMatch->substitutions[i]);
+            substitution* su = &(match->substitutions[i]);
+            substitution* suRef = &(refMatch->substitutions[i]);
 
             if (!compare_subst(su, suRef, debug)) {
                 continue;
@@ -105,7 +100,6 @@ int valid_match(net_match* match, vector* refmatches, int debug) {
 }
 
 int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
-	subjectFlatterm* ft_subject = parse_subject(subject);
 	d_net* net = net_init();
 
     int i = 0;
@@ -114,6 +108,8 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
         add_pattern(net, ft);
         i++;
     }
+
+	subjectFlatterm* ft_subject = parse_subject(subject, getSymbolHt(net));
 	
 	vector* matches = pattern_match(net, ft_subject);
 
@@ -127,7 +123,7 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
     int res = 0;
 
 	for (int i = 0; i < vector_size(matches); i++) {
-		net_match* match = (net_match*)vector_at(matches, i);
+		match_entry* match = (match_entry*)vector_at(matches, i);
         if (!valid_match(match, refmatches, debug)) {
             res = 1;
             break;
