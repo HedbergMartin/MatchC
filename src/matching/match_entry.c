@@ -7,7 +7,7 @@ match_entry* create_match(char* pattern, s_vector* sv, sub_arr_entry* s_arr, vec
     match->substitutions = malloc(match->subst_amount * sizeof(substitution));
 
     for (int i = 0; i < match->subst_amount; i++) {
-        int index = s_vector_at(sv, i)->from;
+        int index = s_vector_at(sv, i);
         match->substitutions[i].from = (char*)vector_at(idLookup, index);
         match->substitutions[i].to = s_arr[index].to;
         match->substitutions[i].len = s_arr[index].len;

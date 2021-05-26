@@ -23,14 +23,14 @@ IHCT_TEST(perf_test) {
 
 
     subjectFlatterm** subjects = malloc(sizeof(subjectFlatterm) * (subjectCount+1) );
-    load_subjects(filenameSubjects, subjects, subjectCount, &timeParseSubject);
+    load_subjects(filenameSubjects, subjects, subjectCount, &timeParseSubject, net);
 
     for (int i = 0; i < subjectCount; i++) {
         //fprintf(stderr, "i: %d\n", i);
         //print_subjectFlatterm(subjects[i]);
         //printf("-----\nMatches:\n");
         matchStart = clock();
-        vector* matches = pattern_match(net, subjects[i]);
+        vector* matches = pattern_match_measure(net, subjects[i]);
         matchEnd = clock();
         timeMatch += (double)(matchEnd - matchStart) / CLOCKS_PER_SEC;
 

@@ -23,7 +23,7 @@ struct d_net {
     int nextId;
 };
 
-int get_nextId(d_net* dn) {
+int net_nextId(d_net* dn) {
     return dn->nextId;
 }
 
@@ -363,6 +363,21 @@ vector* pattern_match(d_net* dn, char* subject) {
     sub_arr_entry* s_arr = calloc(vector_size(dn->idLookup), sizeof(sub_arr_entry)); //Todo maybe move into dnet
 
 	subjectFlatterm* ft_subject = parse_subject(subject, dn->symbolHt, dn->nextId); //!Note if f[x + y]
+	// print_subjectFlatterm(ft_subject);
+
+    _match(dn, dn->root, ft_subject, s_arr, sv, matches);
+
+    // subjectFlatterm_free(ft_subject); // !Note Cant free here because it is needed by results, how to handle this?
+    free(s_arr);
+    s_vector_free(sv);
+    return matches;
+}
+
+vector* pattern_match_measure(d_net* dn, subjectFlatterm* ft_subject) {
+    vector* matches = vector_init();
+    s_vector* sv = s_vector_init();
+    sub_arr_entry* s_arr = calloc(vector_size(dn->idLookup), sizeof(sub_arr_entry)); //Todo maybe move into dnet
+
 	// print_subjectFlatterm(ft_subject);
 
     _match(dn, dn->root, ft_subject, s_arr, sv, matches);

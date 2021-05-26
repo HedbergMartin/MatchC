@@ -71,8 +71,8 @@ s_entry* s_vector_copy(s_vector* v, int* len) {
 	return c;
 }
 
-s_entry* s_vector_at(s_vector* v, size_t index) {
-	return &(v->data[index]);
+int s_vector_at(s_vector* v, size_t index) {
+	return v->data[index].from;
 }
 
 size_t s_vector_size(s_vector* v) {

@@ -6,26 +6,27 @@
 #include "vector.h"
 #include "subjectFlatterm.h"
 #include "ihct.h"
+#include "match_entry.h"
 
-#define INIT_MATCHER s_vector* sus = s_vector_init(); vector* matches = vector_init();
+#define INIT_MATCHER vector* sus = vector_init(); vector* matches = vector_init();
 #define ADD_SUBST(from, amount, to...) add_subst(sus, from, amount, to);
-#define REGISTER_MATCH vector_push_back(matches, create_match(3, sus)); s_vector_clear(sus);
-#define ASSERT_MATCH(patterns, subject, result) IHCT_ASSERT(test_net(patterns, subject, matches, false) == result); s_vector_free(sus); vector_free(matches, NULL);
+#define REGISTER_MATCH vector_push_back(matches, create_ref_match(NULL, sus)); vector_clear(sus, NULL);
+#define ASSERT_MATCH(patterns, subject, result) IHCT_ASSERT(test_net(patterns, subject, matches, false) == result); vector_free(sus, NULL); vector_free(matches, NULL);
 
 
-net_match* create_match(int id, s_vector* v);
+match_entry* create_ref_match(char* pattern, vector* v);
 
-void add_subst(s_vector* v, char* from, int len, ...);
+void add_subst(vector* v, char* from, int len, ...);
 
-int compare_subst(s_entry* su, s_entry* suRef, int debug);
+int compare_subst(substitution* su, substitution* suRef, int debug);
 
-int valid_match(net_match* match, vector* refmatches, int debug);
+int valid_match(match_entry* match, vector* refmatches, int debug);
 
 int test_net(char* patterns[], char* subject, vector* refmatches, int debug);
 
 void load_patterns(char* filename, d_net* net, double* parseTime, double* addTime );
 
-void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount, double* parseTime);
+void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount, double* parseTime, d_net* net);
 
 void test_free(void* var);
 

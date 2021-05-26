@@ -26,7 +26,7 @@ void s_vector_push_back(s_vector* v, int from);
 void s_vector_pop_back(s_vector* v);
 
 // Inspect an element
-s_entry* s_vector_at(s_vector* v, size_t index);
+int s_vector_at(s_vector* v, size_t index);
 
 // Gets the size of the vector
 size_t s_vector_size(s_vector* v);

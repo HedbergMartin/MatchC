@@ -122,6 +122,15 @@ size_t vector_capacity(vector* v) {
 	return v->capacity;
 }
 
+void vector_clear(vector* v, free_func_callback free_func) {
+	if (free_func) {
+		for (int i = 0; i < v->size; i++) {
+			free_func(v->data[i]);
+		}
+	}
+	v->size = 0;
+}
+
 void vector_free(vector* v, free_func_callback free_func) {
 	if (!v) {
 		return; //Error

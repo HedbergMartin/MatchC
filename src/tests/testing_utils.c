@@ -5,9 +5,25 @@
 #include "string.h"
 #include "stdio.h"
 #include "time.h"
-#include "match_entry.h"
 
-void add_subst(s_vector* v, char* from, int len, ...) {
+match_entry* create_ref_match(char* pattern, vector* v) {
+    match_entry* nm = calloc(1, sizeof(match_entry));
+    nm->pattern = pattern;
+    nm->subst_amount = vector_size(v);
+    nm->substitutions = malloc(nm->subst_amount * sizeof(substitution)); //s_vector_copy(v, &(nm->subst_amount));
+    
+    substitution* s = NULL;
+    for (int i = 0; i < nm->subst_amount; i++) {
+        s = vector_at(v, i);
+        nm->substitutions[i].from = s->from;
+        nm->substitutions[i].to = s->to;
+        nm->substitutions[i].len = s->len;
+    }
+
+    return nm;
+}
+
+void add_subst(vector* v, char* from, int len, ...) {
     va_list args;
     va_start(args, len);
  
@@ -28,8 +44,13 @@ void add_subst(s_vector* v, char* from, int len, ...) {
         }
         prevft = ft;
     }
+
+    substitution* s = malloc(sizeof(substitution));
+    s->from = from;
+    s->to = firstft;
+    s->len = i;
     
-    s_vector_push_back(v, from, firstft, i);
+    vector_push_back(v, s);
  
     va_end(args);
 }
@@ -109,9 +130,9 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
         i++;
     }
 
-	subjectFlatterm* ft_subject = parse_subject(subject, getSymbolHt(net));
+	// subjectFlatterm* ft_subject = parse_subject(subject, getSymbolHt(net));
 	
-	vector* matches = pattern_match(net, ft_subject);
+	vector* matches = pattern_match(net, subject);
 
     if (vector_size(matches) != vector_size(refmatches)) {
 
@@ -176,7 +197,7 @@ void load_patterns(char* filename, d_net* net, double* parseTime, double* addTim
     }    
 }
 
-void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount, double* parseTime) {
+void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount, double* parseTime, d_net* net) {
     int MAXCHAR = 5000;
     FILE *fp;
     char str[MAXCHAR];
@@ -194,7 +215,7 @@ void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount,
                 break;
             }
             startParseSubject = clock();
-            subjectFlatterm* sf = parse_subject(str);
+            subjectFlatterm* sf = parse_subject(str, getSymbolHt(net), net_nextId(net));
             endParseSubject = clock();
             *parseTime += (double)(endParseSubject - startParseSubject) / CLOCKS_PER_SEC;
 
@@ -212,7 +233,7 @@ void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount,
 }
 
 void test_free(void* var) {
-    net_match* match = (net_match*)var;
+    match_entry* match = (match_entry*)var;
     free(match->substitutions);
     free(match);
 }
