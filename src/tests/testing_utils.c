@@ -157,7 +157,7 @@ void load_patterns(char* filename, d_net* net, double* parseTime, double* addTim
     clock_t startAddPattern;
     clock_t endAddPattern;
     if (fp == NULL){
-        fprintf(stderr, "Could not open file %s",filename);
+        fprintf(stderr, "Could not open file %s\n",filename);
     } else {
         int i = 0;
         while (fgets(str, MAXCHAR, fp) != NULL) {
@@ -189,7 +189,7 @@ void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount,
     clock_t endParseSubject;
     fp = fopen(filename, "r");
     if (fp == NULL){
-        fprintf(stderr, "Could not open file %s",filename);
+        fprintf(stderr, "Could not open file %s\n",filename);
     } else {
         int i = 0;
         while (fgets(str, MAXCHAR, fp) != NULL) {

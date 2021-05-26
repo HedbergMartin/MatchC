@@ -177,17 +177,17 @@ void _match(d_net* dn, subjectFlatterm* t, s_vector* subst_vector, vector* match
     } else {
         d_net* subnet = NULL;
         enum functype f_type = t->f_type;// == t->skip ? FT_NOTAFUNC : FT_PREFIX; //!Need to fix this so this knows if it's a func or not
-        
-        // Symbol matching
-        if ((subnet = find_subnet(dn, t->symbol, f_type)) != NULL) {
-            _match(subnet, t->next, subst_vector, matches);
-        }
 
         void** subnet_data = vector_data(dn->subnets);
         for (int i = 0; i < vector_size(dn->subnets); i++) {
             subnet = (d_net*)subnet_data[i];
 
             if (subnet->m_type == MT_CONSTANT) {
+                if (f_type == subnet->f_type) { 
+                    if (strcmp(subnet->symbol, t->symbol) == 0) {
+                        _match(subnet, t->next, subst_vector, matches);
+                    }
+                }
                 continue;
             }
 
