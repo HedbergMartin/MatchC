@@ -6,6 +6,7 @@
 struct s_vector {
 	s_entry* data;
 	size_t capacity;
+	size_t default_capacity;
 	size_t size;
 };
 
@@ -17,17 +18,26 @@ s_vector *s_vector_init() {
 	}
 
 	v->capacity = 0;
+	v->default_capacity = 10;
 	v->size = 0;
 }
 
-void s_vector_push_back(s_vector* v, char* from, subjectFlatterm* to, int len) {
+void s_vector_reserve(s_vector* v, size_t capacity) {
+	if (!v) {
+		return; //Error
+	}
+
+	v->default_capacity = capacity;
+}
+
+void s_vector_push_back(s_vector* v, int from) {
 	if (!v) {
 		return; //Error?
 	}
 
 	if (v->capacity <= v->size) {
 		if (v->capacity == 0) {
-			v->capacity = 10;
+			v->capacity = v->default_capacity;
 			v->data = malloc(v->capacity * sizeof(s_entry));
 		} else {
 			s_entry* newDataLoc = malloc(v->capacity * 2 * sizeof(s_entry));
@@ -39,8 +49,6 @@ void s_vector_push_back(s_vector* v, char* from, subjectFlatterm* to, int len) {
 	}
 
 	v->data[v->size].from = from;
-	v->data[v->size].to = to;
-	v->data[v->size].len = len;
 	
 	v->size++;
 }

@@ -7,16 +7,19 @@
 
 typedef struct s_vector s_vector;
 typedef struct s_entry {
-    char* from;
+    int from;
+} s_entry;
+
+typedef struct sub_arr_entry {
     subjectFlatterm* to;
     int len;
-}s_entry;
+} sub_arr_entry;
 
 // Creates a empty s_vector.
 s_vector* s_vector_init();
 
 // Pushes an element to the end of the s_vector. Expands the list
-void s_vector_push_back(s_vector* v, char* from, subjectFlatterm* to, int len);
+void s_vector_push_back(s_vector* v, int from);
 
 // Pops the last element in the s_vector
 void s_vector_pop_back(s_vector* v);

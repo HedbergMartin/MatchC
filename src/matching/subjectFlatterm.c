@@ -46,7 +46,7 @@ char* parse_name(char* subject, int start, int end) {
     return name;
 }
 
-struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, int* index) {
+struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, int* index, hash_table* subject_ht, hash_table* constant_ht, int nextId) {
     int start = *index;
     int end = *index;
 
@@ -61,7 +61,14 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
             start = *index + 1;
 
             if (name != NULL) { 
+                int id = get_entry(constant_ht, name);
+
+                if (id == -1) {
+                    id = insert_if_absent(subject_ht, name, id, &nextId);
+                    nextId += 1;
+                }
                 struct subjectFlatterm* current = new_subjectFlatterm(name);
+                current->id;
                 current->parent = parent;
 
                 if (prev != NULL) {
@@ -107,9 +114,9 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
     return prev;
 }
 
-struct subjectFlatterm* parse_subject(char* subject) {
+struct subjectFlatterm* parse_subject(char* subject, hash_table* subject_ht, hash_table* constant_ht) {
     int index = 0;
-    subjectFlatterm* first = _parse_subject(subject, NULL, &index);
+    subjectFlatterm* first = _parse_subject(subject, NULL, &index, subject_ht, constant_ht);
 
     //fprintf(stderr, "Subject: %s\n", subject);
 

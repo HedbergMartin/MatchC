@@ -107,6 +107,18 @@ void insert_entry(struct hash_table* ht, char* key, int id ) {
     }
 }
 
+int get_entry(struct hash_table* ht, char* key) {
+    size_t index = hash_func(key, ht->size);
+
+    struct hash_entry* hte_temp = find_entry(ht, key);
+
+    if (hte_temp == NULL) {
+        return -1;
+    } else {
+        return hte_temp->id;
+    }
+}
+
 
 void remove_entry(struct hash_table* ht, char* key ) {
     size_t index = hash_func(key, ht->size);

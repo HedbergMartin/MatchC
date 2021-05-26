@@ -19,6 +19,7 @@ struct hash_table* create_hash_table(int hash_size);
 int insert_if_absent(struct hash_table* ht, char* key, int* nextId);
 void insert_entry_unsafe(struct hash_table* ht, char* key, int id);
 void insert_entry(struct hash_table* ht, char* key, int id);
+int get_entry(struct hash_table* ht, char* key);
 void remove_entry(struct hash_table* ht, char* key);
 void delete_hash_table(struct hash_table* ht);
 
