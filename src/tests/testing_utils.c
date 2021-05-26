@@ -1,10 +1,10 @@
-#include "ihct.h"
-#include "d_net.h"
+#include "testing_utils.h"
+
+#include <stdarg.h>
 #include "parser.h"
 #include "string.h"
 #include "stdio.h"
 #include "time.h"
-#include <stdarg.h>
 
 net_match* create_match(int id, s_vector* v) {
     net_match* nm = calloc(1, sizeof(net_match));
@@ -45,11 +45,11 @@ int compare_subst(s_entry* su, s_entry* suRef, int debug) {
     }
 
     if (su->len != suRef->len) {
-        return 1;
+        return 0;
     }
     
     if (strcmp(su->from, suRef->from) != 0) {
-        return 1;
+        return 0;
     }
 
 
@@ -61,13 +61,13 @@ int compare_subst(s_entry* su, s_entry* suRef, int debug) {
         }
 
         if (strcmp(ft->symbol, ftRef->symbol) != 0) {
-            return 1;
+            return 0;
         }
         ft = ft->skip;
         ftRef = ftRef->skip;
     }
 
-    return 0;
+    return 1;
 }
 
 int valid_match(net_match* match, vector* refmatches, int debug) {
@@ -80,15 +80,15 @@ int valid_match(net_match* match, vector* refmatches, int debug) {
             //fprintf(str, "MatchID: %d(%d)\n", match->matchid, refMatch->matchid);
         }
 
-        if (match->matchid != refMatch->matchid) {
-            continue;
-        }
+        // if (match->matchid != refMatch->matchid) {
+        //     continue;
+        // }
 
         for (int i = 0; i < match->subst_amount; i++) {
             s_entry* su = &(match->substitutions[i]);
             s_entry* suRef = &(refMatch->substitutions[i]);
 
-            if (compare_subst(su, suRef, debug) != 0) {
+            if (!compare_subst(su, suRef, debug)) {
                 continue;
             }
             
@@ -98,10 +98,10 @@ int valid_match(net_match* match, vector* refmatches, int debug) {
         }
         
         printf("%s", str);
-        return 0;
+        return 1;
     }
 
-    return 1;
+    return 0;
 }
 
 int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
@@ -128,6 +128,10 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
 
 	for (int i = 0; i < vector_size(matches); i++) {
 		net_match* match = (net_match*)vector_at(matches, i);
+        if (!valid_match(match, refmatches, debug)) {
+            res = 1;
+            break;
+        }
 	}
 	// for (i = 0; i < vector_size(matches); i++) {
     //     char* m = (char*)vector_at(matches, i);
@@ -215,160 +219,4 @@ void test_free(void* var) {
     net_match* match = (net_match*)var;
     free(match->substitutions);
     free(match);
-}
-
-IHCT_TEST(perf_test) {
-    
-    char* filenamePatterns = "../../patterns_100000.txt";
-    char* filenameSubjects = "../../subjects_10000.txt";
-    d_net* net = net_init();
-    int subjectCount = 1000;
-
-    double timeParsePattern = 0;
-    double timeAddPattern = 0;
-    double timeParseSubject = 0;
-    double timeMatch = 0;
-
-    clock_t matchStart;
-    clock_t matchEnd;
- 
-    load_patterns(filenamePatterns, net, &timeParsePattern, &timeAddPattern);
-
-
-    subjectFlatterm** subjects = malloc(sizeof(subjectFlatterm) * (subjectCount+1) );
-    load_subjects(filenameSubjects, subjects, subjectCount, &timeParseSubject);
-
-    for (int i = 0; i < subjectCount; i++) {
-        //fprintf(stderr, "i: %d\n", i);
-        //print_subjectFlatterm(subjects[i]);
-        //printf("-----\nMatches:\n");
-        matchStart = clock();
-        vector* matches = pattern_match(net, subjects[i]);
-        matchEnd = clock();
-        timeMatch += (double)(matchEnd - matchStart) / CLOCKS_PER_SEC;
-
-        // for (int i = 0; i < vector_size(matches); i++) {
-        //     net_match* match = (net_match*)vector_at(matches, i);
-        //     printf("MatchID: %d\n", match->matchid);
-        //     for (int i = 0; i < match->subst_amount; i++) {
-        //         s_entry* su = &(match->substitutions[i]);
-        //         printf("From: %s, To: ", su->from);
-        //         subjectFlatterm* ft = su->to;
-        //         for (int j = 0; j < su->len; j++) {
-        //             printf("%s, ", ft->symbol);
-        //             ft = ft->skip;
-        //         }
-        //         printf("\n");
-        //     }
-        // }
-        vector_free(matches, test_free);
-    }
-
-    fprintf(stderr, "timeParsePattern: %f\n", timeParsePattern);
-    fprintf(stderr, "timeAddPattern: %f\n", timeAddPattern);
-    fprintf(stderr, "timeParseSubject: %f\n", timeParseSubject);
-    fprintf(stderr, "timeMatch: %f\n", timeMatch);
-
-    IHCT_ASSERT(0 == 0);
-    net_free(net);
-
-    for (int i = 0; i < subjectCount; i++) {
-
-        subjectFlatterm_free(subjects[i]);
-    }
-    free(subjects);
-}
-
-IHCT_TEST(variable_match) {
-    char* patterns[] = {"f[x_]", NULL};
-    s_vector* sus = s_vector_init();
-    add_subst(sus, "x_", 1, "2");
-    net_match* new_match = create_match(1, sus);
-
-    vector* matches = vector_init();
-    vector_push_back(matches, new_match);
-
-    IHCT_ASSERT(test_net(patterns, "f[2]", matches, false) == 0);
-}
-
-IHCT_TEST(variable_repeating_match) {
-    char* patterns[] = {"f[x_, x_]", NULL};
-    s_vector* sus = s_vector_init();
-    add_subst(sus, "x_", 1, "2");
-    net_match* new_match = create_match(1, sus);
-
-    vector* matches = vector_init();
-    vector_push_back(matches, new_match);
-
-    IHCT_ASSERT(test_net(patterns, "f[2, 2]", matches, false) == 0);
-}
-
-IHCT_TEST(variable_repeating_not_match1) {
-    char* patterns[] = {"f[x_, x_]", NULL};
-    s_vector* sus = s_vector_init();
-    add_subst(sus, "x_", 1, "2");
-    add_subst(sus, "x_", 1, "3");
-    net_match* new_match = create_match(1, sus);
-
-    vector* matches = vector_init();
-    vector_push_back(matches, new_match);
-
-    IHCT_ASSERT(test_net(patterns, "f[2, 3]", matches, false) == 1);
-}
-
-IHCT_TEST(variable_repeating_not_match2) {
-    char* patterns[] = {"f[x_, x_]", NULL};
-    s_vector* sus = s_vector_init();
-    add_subst(sus, "x_", 1, "2");
-    net_match* new_match = create_match(1, sus);
-
-    vector* matches = vector_init();
-    vector_push_back(matches, new_match);
-
-    IHCT_ASSERT(test_net(patterns, "f[2, 3]", matches, false) == 1);
-}
-
-IHCT_TEST(variable_function_match) {
-    char* patterns[] = {"f[x_]", NULL};
-
-    s_vector* sus = s_vector_init();
-    vector* matches = vector_init();
-
-    add_subst(sus, "x_", 1, "g");
-    vector_push_back(matches, create_match(2, sus));
-
-    IHCT_ASSERT(test_net(patterns, "f[g[h[]]]", matches, false) == 0);
-}
-
-IHCT_TEST(sequence_match) {
-    char* patterns[] = {"f[x___, y___]", NULL};
-    
-    s_vector* sus = s_vector_init();
-    vector* matches = vector_init();
-
-    add_subst(sus, "x___", 0, NULL);
-    add_subst(sus, "y___", 3, "a", "b", "c");
-    vector_push_back(matches, create_match(3, sus));
-    s_vector_clear(sus);
-
-    add_subst(sus, "x___", 1, "a");
-    add_subst(sus, "y___", 2, "b", "c");
-    vector_push_back(matches, create_match(3, sus));
-    s_vector_clear(sus);
-
-    add_subst(sus, "x___", 2, "a", "b");
-    add_subst(sus, "y___", 1, "c");
-    vector_push_back(matches, create_match(3, sus));
-    s_vector_clear(sus);
-
-    add_subst(sus, "x___", 3, "a", "b", "c");
-    add_subst(sus, "y___", 0, NULL);
-    vector_push_back(matches, create_match(3, sus));
-    s_vector_clear(sus);
-
-    IHCT_ASSERT(test_net(patterns, "f[a, b, c]", matches, false) == 0);
-}
-
-int main(int argc, char **argv) {
-    return IHCT_RUN(argc, argv);
 }
