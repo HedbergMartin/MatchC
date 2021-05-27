@@ -16,6 +16,7 @@ match_set* pattern_match(d_net* dn, char* subject);
 void net_free(d_net* net);
 hash_table* getSymbolHt(d_net* dn);
 int net_nextId(d_net* dn);
+//void print_times();
 
 match_set* pattern_match_measure(d_net* dn, subjectFlatterm* ft_subject);
 

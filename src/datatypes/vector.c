@@ -1,4 +1,5 @@
 #include "vector.h"
+//#include "time.h"
 #include <memory.h>
 #include <stdio.h>
 #include <errno.h>
@@ -39,7 +40,13 @@ void vector_reserve(vector* v, size_t capacity) {
 	v->default_capacity = capacity;
 }
 
+/*double timePushBack = 0;
+clock_t pushBackStart ;
+clock_t pushBackEnd;*/
+
 void vector_push_back(vector* v, void* value) {
+	//pushBackStart = clock();
+
 	if (!v) {
 		return; //Error?
 	}
@@ -49,7 +56,7 @@ void vector_push_back(vector* v, void* value) {
 			v->capacity = v->default_capacity;
 			v->data = malloc(v->capacity * sizeof(void*));
 		} else {
-			void** newDataLoc = malloc(v->capacity * 2 * sizeof(void*));
+			void** newDataLoc = malloc(v->capacity * 3 * sizeof(void*));
 			memcpy(newDataLoc, v->data, v->capacity * sizeof(void*));
 			free(v->data);
 			v->data = newDataLoc;
@@ -59,9 +66,17 @@ void vector_push_back(vector* v, void* value) {
 
 	v->data[v->size] = value;
 	v->size++;
+	/*pushBackEnd = clock();
+	timePushBack += (double)(pushBackEnd - pushBackStart) / CLOCKS_PER_SEC;*/
 }
 
+/*double timePopBack = 0;
+clock_t popBackStart;
+clock_t popBackEnd;*/
+
 void vector_pop_back(vector* v, free_func_callback free_func) {
+	//popBackStart = clock();
+
 	if (!v) {
 		return;
 	}
@@ -72,6 +87,8 @@ void vector_pop_back(vector* v, free_func_callback free_func) {
 			free_func(v->data[v->size]);
 		}
 	}
+	/*popBackEnd = clock();
+	timePopBack += (double)(popBackEnd - popBackStart) / CLOCKS_PER_SEC;*/
 }
 
 void* vector_at(vector* v, size_t index) {
@@ -131,6 +148,10 @@ void vector_clear(vector* v, free_func_callback free_func) {
 	v->size = 0;
 }
 
+/*void vector_print_push_pop() {
+	fprintf(stderr, "Time Pushback: %f, Time popback: %f\n", timePushBack, timePopBack);
+}*/
+
 void vector_free(vector* v, free_func_callback free_func) {
 	if (!v) {
 		return; //Error
@@ -146,4 +167,5 @@ void vector_free(vector* v, free_func_callback free_func) {
 		free(v->data);
 	}
 	free(v);
+	
 }

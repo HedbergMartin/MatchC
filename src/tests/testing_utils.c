@@ -108,25 +108,31 @@ int valid_match(match_entry* match, vector* refmatches, int debug) {
             //fprintf(str, "MatchID: %d(%d)\n", match->matchid, refMatch->matchid);
         }
 
-        // if (match->matchid != refMatch->matchid) {
-        //     continue;
-        // }
+        if (match->subst_amount != refMatch->subst_amount) {
+            continue;
+        }
 
+        bool subCorrect = true;
         for (int i = 0; i < match->subst_amount; i++) {
             substitution* su = &(match->substitutions[i]);
             substitution* suRef = &(refMatch->substitutions[i]);
 
             if (!compare_subst(su, suRef, debug)) {
-                continue;
+                subCorrect = false;
+                break;
             }
             
             if (debug) {
                 //fprintf(str, "\n");
             }
         }
-        
-        printf("%s", str);
-        return 1;
+
+        if (subCorrect == true ) {
+            return 1;
+        }
+
+
+        //printf("%s", str);
     }
 
     return 0;

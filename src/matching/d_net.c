@@ -1,4 +1,5 @@
 #include "d_net.h"
+#include "time.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -216,6 +217,25 @@ int get_strCmps() {
     return strCmps;
 }
 
+/*double time1 = 0;
+clock_t time1Start;
+clock_t time1End;
+
+double time21 = 0;
+clock_t time21Start;
+clock_t time21End;
+
+double time22 = 0;
+clock_t time22Start;
+clock_t time22End;
+
+double time23 = 0;
+clock_t time23Start;
+clock_t time23End;
+
+double time3 = 0;
+clock_t time3Start;
+clock_t time3End;*/
 
 void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s_arr, int_vector* sv, vector* matches) {
 //void _match(net_branch* branch, flatterm* subject, term* t, vector* sv, vector* matches) {
@@ -223,17 +243,22 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
         net_branch* subnet = NULL;
         void** subnet_data = vector_data(branch->subnets);
         for (int i = 0; i < vector_size(branch->subnets); i++) {
+            //time1Start = clock();
             subnet = (net_branch*)subnet_data[i];
             if (subnet->m_type == MT_STAR) {
 
                 switch (is_valid_match(subnet->id, NULL, -1, s_arr)) {
                 case 1:
+                    /*time1End = clock();
+                    time1 += (double)(time1End - time1Start) / CLOCKS_PER_SEC;*/
                     _match(net, subnet, t, s_arr, sv, matches);
                     break;
                 case 2:
                     int_vector_push_back(sv, subnet->id);
                     s_arr[subnet->id].to = NULL;
                     s_arr[subnet->id].len = -1;
+                    /*time1End = clock();
+                    time1 += (double)(time1End - time1Start) / CLOCKS_PER_SEC;*/
 
                     _match(net, subnet, t, s_arr, sv, matches);
                     s_arr[subnet->id].to = NULL;
@@ -253,31 +278,39 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
         }
     } else {
         net_branch* subnet = NULL;
-        enum functype f_type = t->f_type;// == t->skip ? FT_NOTAFUNC : FT_PREFIX; //!Need to fix this so this knows if it's a func or not
+        enum functype f_type = t->f_type;
 
         void** subnet_data = vector_data(branch->subnets);
         for (int i = 0; i < vector_size(branch->subnets); i++) {
+            //time21Start = clock();
             subnet = (net_branch*)subnet_data[i];
 
             if (subnet->m_type == MT_CONSTANT) {
                 if (f_type == subnet->f_type) { 
                     if (subnet->id == t->id) {
+                        /*time21End = clock();
+                        time21 += (double)(time21End - time21Start) / CLOCKS_PER_SEC;*/
                         _match(net, subnet, t->next, s_arr, sv, matches);
                     }
                 }
                 continue;
-            }
+            } 
+            //time22Start = clock();
 
             if (subnet->m_type == MT_STAR) {
 
                 switch (is_valid_match(subnet->id, NULL, -1, s_arr)) {
                 case 1:
+                    /*time22End = clock();
+                    time22 += (double)(time22End - time22Start) / CLOCKS_PER_SEC;*/
                     _match(net, subnet, t, s_arr, sv, matches);
                     break;
                 case 2:
                     int_vector_push_back(sv, subnet->id);
                     s_arr[subnet->id].to = NULL;
                     s_arr[subnet->id].len = -1;
+                    /*time22End = clock();
+                    time22 += (double)(time22End - time22Start) / CLOCKS_PER_SEC;*/
 
                     _match(net, subnet, t, s_arr, sv, matches);
                     s_arr[subnet->id].to = NULL;
@@ -287,15 +320,20 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                 case 0: //invalid match;
                     break;
                 }
-            }
+            } 
+            //time23Start = clock();
 
             switch (is_valid_match(subnet->id, t, 1, s_arr)) {
             case 1:
                 if (f_type == FT_PREFIX && subnet->m_type == MT_VARIABLE && subnet->f_type == FT_PREFIX) {
                     // Matching generic function name
+                    /*time23End = clock();
+                    time23 += (double)(time23End - time23Start) / CLOCKS_PER_SEC;*/
                     _match(net, subnet, t->next, s_arr, sv, matches);
                 } else {
                     // Variable substitution matching, replace whole term.
+                    /*time23End = clock();
+                    time23 += (double)(time23End - time23Start) / CLOCKS_PER_SEC;*/
                     _match(net, subnet, t->skip, s_arr, sv, matches);
                 }
                 break;
@@ -306,9 +344,13 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
 
                 if (f_type == FT_PREFIX && subnet->m_type == MT_VARIABLE && subnet->f_type == FT_PREFIX) {
                     // Matching generic function name
+                    /*time23End = clock();
+                    time23 += (double)(time23End - time23Start) / CLOCKS_PER_SEC;*/
                     _match(net, subnet, t->next, s_arr, sv, matches);
                 } else {
                     // Variable substitution matching, replace whole term.
+                    /*time23End = clock();
+                    time23 += (double)(time23End - time23Start) / CLOCKS_PER_SEC;*/
                     _match(net, subnet, t->skip, s_arr, sv, matches);
                 }
 
@@ -327,16 +369,21 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                     subjectFlatterm* tEnd = t->skip;
                     int len = 2;
                     while (tEnd != vp->skip) {
+                        //time3Start = clock();
                         // t = slå ihop allt mellan nuvarande term och i
                         //matcha med den substitutionen
                         switch (is_valid_match(subnet->id, t, len, s_arr)) {
                         case 1:
+                            /*time3End = clock();
+                            time3 += (double)(time3End - time3Start) / CLOCKS_PER_SEC;*/
                             _match(net, subnet, tEnd->skip, s_arr, sv, matches);
                             break;
                         case 2:
                             int_vector_push_back(sv, subnet->id);
                             s_arr[subnet->id].to = t;
                             s_arr[subnet->id].len = len;
+                            /*time3End = clock();
+                            time3 += (double)(time3End - time3Start) / CLOCKS_PER_SEC;*/
 
                             _match(net, subnet, tEnd->skip, s_arr, sv, matches);
                             s_arr[subnet->id].to = NULL;
@@ -356,6 +403,9 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
     }
 }
 
+/*void print_times() {
+    fprintf(stderr, "time1: %f, time21: %f, time22: %f, time23: %f, time3: %f\n", time1, time21, time22, time23, time3);
+}*/
 
 match_set* pattern_match(d_net* dn, char* subject) {
     vector* matches = vector_init();

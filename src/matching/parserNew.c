@@ -56,14 +56,14 @@ char* parsePatternName(const char str[], int start, int end, term* t) {
                 free(name);
                 return NULL;
             }
-            name[written] = str[i];
-            written += 1;
 
             if (str[i] == '_') {
                 trailing_ += 1;
             } else {
+                name[written] = str[i];
 				trailing_ = 0;
 			}
+            written += 1;
         } else {
 
             if (written > 0 && str[i] == ' ') {
@@ -109,6 +109,7 @@ term* _parseNextTerm(const char str[], int *index, term* prev, term* parent) {
     int nameEnd = *index;
 
     t->symbol = parsePatternName(str, nameStart, nameEnd, t);
+
 
     if (t->symbol == NULL) {
 
