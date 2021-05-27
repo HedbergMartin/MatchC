@@ -357,7 +357,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
 }
 
 
-vector* pattern_match(d_net* dn, char* subject) {
+match_set* pattern_match(d_net* dn, char* subject) {
     vector* matches = vector_init();
     int_vector* sv = int_vector_init();
     sub_arr_entry* s_arr = calloc(vector_size(dn->idLookup), sizeof(sub_arr_entry)); //Todo maybe move into dnet
@@ -367,13 +367,13 @@ vector* pattern_match(d_net* dn, char* subject) {
 
     _match(dn, dn->root, ft_subject, s_arr, sv, matches);
 
-    subjectFlatterm_free(ft_subject); // !Note Cant free here because it is needed by results, how to handle this?
+    
     free(s_arr);
     int_vector_free(sv);
-    return matches;
+    return create_match_set(ft_subject, matches);
 }
 
-vector* pattern_match_measure(d_net* dn, subjectFlatterm* ft_subject) {
+match_set* pattern_match_measure(d_net* dn, subjectFlatterm* ft_subject) {
     vector* matches = vector_init();
     int_vector* sv = int_vector_init();
     sub_arr_entry* s_arr = calloc(vector_size(dn->idLookup), sizeof(sub_arr_entry)); //Todo maybe move into dnet
@@ -385,7 +385,7 @@ vector* pattern_match_measure(d_net* dn, subjectFlatterm* ft_subject) {
     // subjectFlatterm_free(ft_subject); // !Note Cant free here because it is needed by results, how to handle this?
     free(s_arr);
     int_vector_free(sv);
-    return matches;
+    return create_match_set(ft_subject, matches);
 }
 
 

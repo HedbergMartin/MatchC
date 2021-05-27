@@ -27,17 +27,27 @@ void add_subst(vector* v, char* from, int len, ...) {
     va_list args;
     va_start(args, len);
 
-
-    substitution* s = malloc(sizeof(substitution));
-    s->len = len;
-    s->from = from;
-    s->to = malloc(len * sizeof(char*));//s_arr[index].to;
-    int i = 0;
-    for (i = 0; i < len; i++) {
+    subjectFlatterm* prevft = NULL;
+    subjectFlatterm* firstft = NULL;
+    for (int i = 0; i < len; i++) {
         char* to = va_arg(args, char*);
         
-        s->to[i] = to;
+        subjectFlatterm* ft = calloc(1, sizeof(subjectFlatterm));
+        ft->symbol = to;
+
+        if (firstft == NULL) {
+            firstft = ft;
+        }
+        if (prevft != NULL) {
+            prevft->skip = ft;
+        }
+        prevft = ft;
     }
+
+    substitution* s = malloc(sizeof(substitution));
+    s->from = from;
+    s->to = firstft;
+    s->len = len;
     
     vector_push_back(v, s);
  
@@ -47,7 +57,12 @@ void add_subst(vector* v, char* from, int len, ...) {
 void free_ref_match(void* var) {
     match_entry* m = (match_entry*)var;
     for (int i = 0; i < m->subst_amount; i++) {
-        free(m->substitutions[i].to);
+        subjectFlatterm* ft = m->substitutions[i].to;
+        for (int l = 0; l < m->substitutions[i].len; l++) {
+            subjectFlatterm* next = ft->skip;
+            free(ft);
+            ft = next;
+        }
     }
     free(m->substitutions);
     free(m);
@@ -66,17 +81,18 @@ int compare_subst(substitution* su, substitution* suRef, int debug) {
         return 0;
     }
 
-
-    char** ft = su->to;
-    char** ftRef = suRef->to;
+    subjectFlatterm* ft = su->to;
+    subjectFlatterm* ftRef = suRef->to;
     for (int j = 0; j < su->len; j++) {
         if (debug) {
-            printf("%s(%s)", ft[j], ftRef[j]);
+            printf("%s(%s)", ft->symbol, ftRef->symbol);
         }
 
-        if (strcmp(ft[j], ftRef[j]) != 0) {
+        if (strcmp(ft->symbol, ftRef->symbol) != 0) {
             return 0;
         }
+        ft = ft->skip;
+        ftRef = ftRef->skip;
     }
 
     return 1;
@@ -128,20 +144,20 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
 
 	// subjectFlatterm* ft_subject = parse_subject(subject, getSymbolHt(net));
 	
-	vector* matches = pattern_match(net, subject);
+	match_set* matches = pattern_match(net, subject);
 
-    if (vector_size(matches) != vector_size(refmatches)) {
+    if (matches_size(matches) != vector_size(refmatches)) {
 
-        fprintf(stderr, "miss match on matches: %ld vs refmatches: %ld\n", vector_size(matches), vector_size(refmatches));
+        fprintf(stderr, "miss match on matches: %ld vs refmatches: %ld\n", matches_size(matches), vector_size(refmatches));
         net_free(net);
-        vector_free(matches, free);
+        match_set_free(matches);
         return 1;
     }
 
     int res = 0;
 
-	for (int i = 0; i < vector_size(matches); i++) {
-		match_entry* match = (match_entry*)vector_at(matches, i);
+	for (int i = 0; i < matches_size(matches); i++) {
+		match_entry* match = get_match(matches, i);
         if (!valid_match(match, refmatches, debug)) {
             res = 1;
             break;
@@ -156,7 +172,7 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
     //     }
 	// }
 
-	vector_free(matches, match_free);
+    match_set_free(matches);
     net_free(net);
     return res;
 }

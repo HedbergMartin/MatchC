@@ -5,9 +5,11 @@
 #include "int_vector.h"
 #include "vector.h"
 
+typedef struct match_set match_set;
+
 typedef struct substitution {
     char* from;
-    char** to;
+    subjectFlatterm* to;
     int len;
 } substitution;
 
@@ -24,6 +26,12 @@ typedef struct sub_arr_entry {
 
 match_entry* create_match(char* pattern, int_vector* sv, sub_arr_entry* s_arr, vector* idLookup);
 
-void match_free(void* m);
+match_set* create_match_set(subjectFlatterm* ft, vector* matches);
+
+size_t matches_size(match_set* ms);
+
+match_entry* get_match(match_set* ms, size_t index);
+
+void match_set_free(match_set* ms);
 
 #endif

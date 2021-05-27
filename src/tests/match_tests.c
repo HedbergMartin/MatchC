@@ -9,7 +9,7 @@ IHCT_TEST(perf_test) {
     char* filenamePatterns = "../../../patterns.txt";
     char* filenameSubjects = "../../../subjects.txt";
     d_net* net = net_init();
-    int subjectCount = 1000;
+    int subjectCount = 10000;
 
     double timeParsePattern = 0;
     double timeAddPattern = 0;
@@ -30,7 +30,7 @@ IHCT_TEST(perf_test) {
         //print_subjectFlatterm(subjects[i]);
         //printf("-----\nMatches:\n");
         matchStart = clock();
-        vector* matches = pattern_match_measure(net, subjects[i]);
+        match_set* matches = pattern_match_measure(net, subjects[i]);
         matchEnd = clock();
         timeMatch += (double)(matchEnd - matchStart) / CLOCKS_PER_SEC;
 
@@ -48,7 +48,7 @@ IHCT_TEST(perf_test) {
         //         printf("\n");
         //     }
         // }
-        vector_free(matches, test_free);
+        match_set_free(matches);
     }
 
     fprintf(stderr, "timeParsePattern: %f\n", timeParsePattern);
@@ -59,10 +59,6 @@ IHCT_TEST(perf_test) {
     IHCT_ASSERT(0 == 0);
     net_free(net);
 
-    for (int i = 0; i < subjectCount; i++) {
-
-        subjectFlatterm_free(subjects[i]);
-    }
     free(subjects);
 }
 

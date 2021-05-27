@@ -23,25 +23,25 @@ int main(int argc, char* argv[]) {
 	
 	printf("Net: \n");
 	print_net(net);
-	vector* matches = pattern_match(net, "f[u[p]]");
+	match_set* matches = pattern_match(net, "f[u[p]]");
 	printf("-----\nMatches:\n");
 
-	for (int i = 0; i < vector_size(matches); i++) {
-		match_entry* match = (match_entry*)vector_at(matches, i);
+	for (int i = 0; i < matches_size(matches); i++) {
+		match_entry* match = get_match(matches, i);
 		printf("MatchID: %s\n", match->pattern);
 		for (int i = 0; i < match->subst_amount; i++) {
 			substitution* su = &(match->substitutions[i]);
 			printf("From: %s, To: ", su->from);
-			char** ft = su->to;
+			subjectFlatterm* ft = su->to;
 			for (int j = 0; j < su->len; j++) {
 				printf("%s, ", ft[j]);
+				ft = ft->skip;
 			}
 			printf("\n");
 		}
 	}
 
-	vector_free(matches, match_free);
-
+	match_set_free(matches);
 	net_free(net);
 	
 	// debugPattern(str);
