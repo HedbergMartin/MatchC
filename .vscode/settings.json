@@ -6,7 +6,10 @@
         "parser.h": "c",
         "sstream": "c",
         "vector": "c",
-        "export": "c"
+        "export": "c",
+        "thread": "c",
+        "random": "c",
+        "*.cuh": "c"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }
