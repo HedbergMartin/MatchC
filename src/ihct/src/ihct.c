@@ -32,7 +32,7 @@ typedef struct {
 
 // The number of seconds passed until a test is considered timedout.
 // Default 3. Can be set with -t [time in sec]
-int test_timeout = 100;
+int test_timeout = 300;
 
 pthread_cond_t routine_done = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;

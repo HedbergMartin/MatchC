@@ -10,13 +10,15 @@
 
 #define INIT_MATCHER vector* sus = vector_init(); vector* matches = vector_init();
 #define ADD_SUBST(from, amount, to...) add_subst(sus, from, amount, to);
-#define REGISTER_MATCH vector_push_back(matches, create_ref_match(NULL, sus)); vector_clear(sus, NULL);
-#define ASSERT_MATCH(patterns, subject, result) IHCT_ASSERT(test_net(patterns, subject, matches, false) == result); vector_free(sus, NULL); vector_free(matches, NULL);
+#define REGISTER_MATCH vector_push_back(matches, create_ref_match(NULL, sus)); vector_clear(sus, free);
+#define ASSERT_MATCH(patterns, subject, result) IHCT_ASSERT(test_net(patterns, subject, matches, false) == result); vector_free(sus, free); vector_free(matches, free_ref_match);
 
 
 match_entry* create_ref_match(char* pattern, vector* v);
 
 void add_subst(vector* v, char* from, int len, ...);
+
+void free_ref_match(void* var);
 
 int compare_subst(substitution* su, substitution* suRef, int debug);
 

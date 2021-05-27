@@ -367,7 +367,7 @@ vector* pattern_match(d_net* dn, char* subject) {
 
     _match(dn, dn->root, ft_subject, s_arr, sv, matches);
 
-    // subjectFlatterm_free(ft_subject); // !Note Cant free here because it is needed by results, how to handle this?
+    subjectFlatterm_free(ft_subject); // !Note Cant free here because it is needed by results, how to handle this?
     free(s_arr);
     s_vector_free(sv);
     return matches;

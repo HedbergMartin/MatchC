@@ -23,8 +23,8 @@ int main(int argc, char* argv[]) {
 	
 	printf("Net: \n");
 	print_net(net);
-	printf("-----\nMatches:\n");
 	vector* matches = pattern_match(net, "f[u[p]]");
+	printf("-----\nMatches:\n");
 
 	for (int i = 0; i < vector_size(matches); i++) {
 		match_entry* match = (match_entry*)vector_at(matches, i);
@@ -32,16 +32,17 @@ int main(int argc, char* argv[]) {
 		for (int i = 0; i < match->subst_amount; i++) {
 			substitution* su = &(match->substitutions[i]);
 			printf("From: %s, To: ", su->from);
-			subjectFlatterm* ft = su->to;
+			char** ft = su->to;
 			for (int j = 0; j < su->len; j++) {
-				printf("%s, ", ft->symbol);
-				ft = ft->skip;
+				printf("%s, ", ft[j]);
 			}
 			printf("\n");
 		}
 	}
 
-	vector_free(matches, free);
+	vector_free(matches, match_free);
+
+	net_free(net);
 	
 	// debugPattern(str);
 	// str = "f_(x_) := x";

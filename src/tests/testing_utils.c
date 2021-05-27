@@ -26,33 +26,31 @@ match_entry* create_ref_match(char* pattern, vector* v) {
 void add_subst(vector* v, char* from, int len, ...) {
     va_list args;
     va_start(args, len);
- 
-    subjectFlatterm* prevft = NULL;
-    subjectFlatterm* firstft = NULL;
+
+
+    substitution* s = malloc(sizeof(substitution));
+    s->len = len;
+    s->from = from;
+    s->to = malloc(len * sizeof(char*));//s_arr[index].to;
     int i = 0;
     for (i = 0; i < len; i++) {
         char* to = va_arg(args, char*);
         
-        subjectFlatterm* ft = calloc(1, sizeof(subjectFlatterm));
-        ft->symbol = to;
-
-        if (firstft == NULL) {
-            firstft = ft;
-        }
-        if (prevft != NULL) {
-            prevft->skip = ft;
-        }
-        prevft = ft;
+        s->to[i] = to;
     }
-
-    substitution* s = malloc(sizeof(substitution));
-    s->from = from;
-    s->to = firstft;
-    s->len = i;
     
     vector_push_back(v, s);
  
     va_end(args);
+}
+
+void free_ref_match(void* var) {
+    match_entry* m = (match_entry*)var;
+    for (int i = 0; i < m->subst_amount; i++) {
+        free(m->substitutions[i].to);
+    }
+    free(m->substitutions);
+    free(m);
 }
 
 int compare_subst(substitution* su, substitution* suRef, int debug) {
@@ -69,18 +67,16 @@ int compare_subst(substitution* su, substitution* suRef, int debug) {
     }
 
 
-    subjectFlatterm* ft = su->to;
-    subjectFlatterm* ftRef = suRef->to;
+    char** ft = su->to;
+    char** ftRef = suRef->to;
     for (int j = 0; j < su->len; j++) {
         if (debug) {
-            printf("%s(%s)", ft->symbol, ftRef->symbol);
+            printf("%s(%s)", ft[j], ftRef[j]);
         }
 
-        if (strcmp(ft->symbol, ftRef->symbol) != 0) {
+        if (strcmp(ft[j], ftRef[j]) != 0) {
             return 0;
         }
-        ft = ft->skip;
-        ftRef = ftRef->skip;
     }
 
     return 1;
@@ -137,6 +133,7 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
     if (vector_size(matches) != vector_size(refmatches)) {
 
         fprintf(stderr, "miss match on matches: %ld vs refmatches: %ld\n", vector_size(matches), vector_size(refmatches));
+        net_free(net);
         vector_free(matches, free);
         return 1;
     }
@@ -159,7 +156,8 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
     //     }
 	// }
 
-	vector_free(matches, free);
+	vector_free(matches, match_free);
+    net_free(net);
     return res;
 }
 
@@ -174,7 +172,8 @@ void load_patterns(char* filename, d_net* net, double* parseTime, double* addTim
     clock_t startAddPattern;
     clock_t endAddPattern;
     if (fp == NULL){
-        fprintf(stderr, "Could not open file %s\n",filename);
+        fprintf(stderr, "Could not open file %s",filename);
+        perror(" ");
     } else {
         int i = 0;
         while (fgets(str, MAXCHAR, fp) != NULL) {
@@ -206,7 +205,8 @@ void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount,
     clock_t endParseSubject;
     fp = fopen(filename, "r");
     if (fp == NULL){
-        fprintf(stderr, "Could not open file %s\n",filename);
+        fprintf(stderr, "Could not open file %s",filename);
+        perror(" ");
     } else {
         int i = 0;
         while (fgets(str, MAXCHAR, fp) != NULL) {

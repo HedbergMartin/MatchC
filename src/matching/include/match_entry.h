@@ -7,7 +7,7 @@
 
 typedef struct substitution {
     char* from;
-    subjectFlatterm* to;
+    char** to;
     int len;
 } substitution;
 
@@ -18,5 +18,7 @@ typedef struct match_entry {
 } match_entry;
 
 match_entry* create_match(char* pattern, s_vector* sv, sub_arr_entry* s_arr, vector* idLookup);
+
+void match_free(void* m);
 
 #endif

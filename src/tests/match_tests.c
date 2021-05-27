@@ -9,7 +9,7 @@ IHCT_TEST(perf_test) {
     char* filenamePatterns = "../../../patterns.txt";
     char* filenameSubjects = "../../../subjects.txt";
     d_net* net = net_init();
-    int subjectCount = 1000;
+    int subjectCount = 10000;
 
     double timeParsePattern = 0;
     double timeAddPattern = 0;
@@ -183,7 +183,7 @@ IHCT_TEST(end_star_sequence_match) {
 
     INIT_MATCHER
 
-    ADD_SUBST("x___", 2, "a", "b", "c");
+    ADD_SUBST("x___", 3, "a", "b", "c");
     ADD_SUBST("y_", 1, "d");
     ADD_SUBST("k_", 1, "e");
     ADD_SUBST("g_", 1, "#");
