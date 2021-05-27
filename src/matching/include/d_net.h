@@ -3,8 +3,8 @@
 
 #include "flatterm.h"
 #include "vector.h"
-#include "s_vector.h"
 #include "hash_table_linked.h"
+#include "subjectFlatterm.h"
 
 typedef struct d_net d_net;
 

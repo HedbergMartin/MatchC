@@ -4,14 +4,14 @@
 #include <memory.h>
 #include <stdlib.h>
 
-match_entry* create_match(char* pattern, s_vector* sv, sub_arr_entry* s_arr, vector* idLookup) {
+match_entry* create_match(char* pattern, int_vector* sv, sub_arr_entry* s_arr, vector* idLookup) {
     match_entry* match = malloc(sizeof(match_entry));
     match->pattern = pattern;
-    match->subst_amount = s_vector_size(sv);
+    match->subst_amount = int_vector_size(sv);
     match->substitutions = malloc(match->subst_amount * sizeof(substitution));
 
     for (int i = 0; i < match->subst_amount; i++) {
-        int index = s_vector_at(sv, i);
+        int index = int_vector_at(sv, i);
         substitution* curr = &(match->substitutions[i]);
         curr->from = (char*)vector_at(idLookup, index);
         curr->len = s_arr[index].len;

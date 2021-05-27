@@ -9,7 +9,7 @@ IHCT_TEST(perf_test) {
     char* filenamePatterns = "../../../patterns.txt";
     char* filenameSubjects = "../../../subjects.txt";
     d_net* net = net_init();
-    int subjectCount = 10000;
+    int subjectCount = 1000;
 
     double timeParsePattern = 0;
     double timeAddPattern = 0;

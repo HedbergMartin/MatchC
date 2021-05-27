@@ -168,11 +168,11 @@ int is_valid_match(int patternId, subjectFlatterm* sf, int sfLen, sub_arr_entry*
     }
     return 1;
 }
-/*int is_valid_match(char* patternSymbol, subjectFlatterm* sf, int sfLen, s_vector* sv) {
+/*int is_valid_match(char* patternSymbol, subjectFlatterm* sf, int sfLen, int_vector* sv) {
     int foundValid = 2;
 
-    for (size_t i = 0; i < s_vector_size(sv); i++) {
-        s_entry* entry = s_vector_at(sv, i);
+    for (size_t i = 0; i < int_vector_size(sv); i++) {
+        s_entry* entry = int_vector_at(sv, i);
         
         strCmps += 1;
         if (strcmp(patternSymbol, entry->from) == 0) {
@@ -217,7 +217,7 @@ int get_strCmps() {
 }
 
 
-void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s_arr, s_vector* sv, vector* matches) {
+void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s_arr, int_vector* sv, vector* matches) {
 //void _match(net_branch* branch, flatterm* subject, term* t, vector* sv, vector* matches) {
     if (t == NULL) {
         net_branch* subnet = NULL;
@@ -231,14 +231,14 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                     _match(net, subnet, t, s_arr, sv, matches);
                     break;
                 case 2:
-                    s_vector_push_back(sv, subnet->id);
+                    int_vector_push_back(sv, subnet->id);
                     s_arr[subnet->id].to = NULL;
                     s_arr[subnet->id].len = -1;
 
                     _match(net, subnet, t, s_arr, sv, matches);
                     s_arr[subnet->id].to = NULL;
                     s_arr[subnet->id].len = 0;
-                    s_vector_pop_back(sv);
+                    int_vector_pop_back(sv);
                     break;
                 case 0: //invalid match;
                     break;
@@ -275,14 +275,14 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                     _match(net, subnet, t, s_arr, sv, matches);
                     break;
                 case 2:
-                    s_vector_push_back(sv, subnet->id);
+                    int_vector_push_back(sv, subnet->id);
                     s_arr[subnet->id].to = NULL;
                     s_arr[subnet->id].len = -1;
 
                     _match(net, subnet, t, s_arr, sv, matches);
                     s_arr[subnet->id].to = NULL;
                     s_arr[subnet->id].len = 0;
-                    s_vector_pop_back(sv);
+                    int_vector_pop_back(sv);
                     break;
                 case 0: //invalid match;
                     break;
@@ -300,7 +300,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                 }
                 break;
             case 2:
-                s_vector_push_back(sv, subnet->id);
+                int_vector_push_back(sv, subnet->id);
                 s_arr[subnet->id].to = t;
                 s_arr[subnet->id].len = 1;
 
@@ -314,7 +314,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
 
                 s_arr[subnet->id].to = NULL;
                 s_arr[subnet->id].len = 0;
-                s_vector_pop_back(sv);
+                int_vector_pop_back(sv);
                 break;
             case 0: //invalid match;
                 break;
@@ -334,14 +334,14 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                             _match(net, subnet, tEnd->skip, s_arr, sv, matches);
                             break;
                         case 2:
-                            s_vector_push_back(sv, subnet->id);
+                            int_vector_push_back(sv, subnet->id);
                             s_arr[subnet->id].to = t;
                             s_arr[subnet->id].len = len;
 
                             _match(net, subnet, tEnd->skip, s_arr, sv, matches);
                             s_arr[subnet->id].to = NULL;
                             s_arr[subnet->id].len = 0;
-                            s_vector_pop_back(sv);
+                            int_vector_pop_back(sv);
                             break;
                         case 0: //invalid match;
                             break;
@@ -359,7 +359,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
 
 vector* pattern_match(d_net* dn, char* subject) {
     vector* matches = vector_init();
-    s_vector* sv = s_vector_init();
+    int_vector* sv = int_vector_init();
     sub_arr_entry* s_arr = calloc(vector_size(dn->idLookup), sizeof(sub_arr_entry)); //Todo maybe move into dnet
 
 	subjectFlatterm* ft_subject = parse_subject(subject, dn->symbolHt, dn->nextId); //!Note if f[x + y]
@@ -369,13 +369,13 @@ vector* pattern_match(d_net* dn, char* subject) {
 
     subjectFlatterm_free(ft_subject); // !Note Cant free here because it is needed by results, how to handle this?
     free(s_arr);
-    s_vector_free(sv);
+    int_vector_free(sv);
     return matches;
 }
 
 vector* pattern_match_measure(d_net* dn, subjectFlatterm* ft_subject) {
     vector* matches = vector_init();
-    s_vector* sv = s_vector_init();
+    int_vector* sv = int_vector_init();
     sub_arr_entry* s_arr = calloc(vector_size(dn->idLookup), sizeof(sub_arr_entry)); //Todo maybe move into dnet
 
 	// print_subjectFlatterm(ft_subject);
@@ -384,7 +384,7 @@ vector* pattern_match_measure(d_net* dn, subjectFlatterm* ft_subject) {
 
     // subjectFlatterm_free(ft_subject); // !Note Cant free here because it is needed by results, how to handle this?
     free(s_arr);
-    s_vector_free(sv);
+    int_vector_free(sv);
     return matches;
 }
 

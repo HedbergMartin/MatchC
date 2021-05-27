@@ -1,7 +1,6 @@
 #ifndef MC_TESTING_UTILS
 #define MC_TESTING_UTILS
 
-#include "s_vector.h"
 #include "d_net.h"
 #include "vector.h"
 #include "subjectFlatterm.h"
