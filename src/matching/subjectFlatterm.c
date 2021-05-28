@@ -97,6 +97,7 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
                     current->skip = NULL;
                     nextIsSkip = true;
                     start = *index + 1;
+                    continue;
                 } else {
                     prev = current;
                 }

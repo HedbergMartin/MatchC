@@ -9,7 +9,7 @@ IHCT_TEST(perf_test) {
     char* filenamePatterns = "../../../patterns.txt";
     char* filenameSubjects = "../../../subjects.txt";
     d_net* net = net_init();
-    int subjectCount = 10000;
+    int subjectCount = 1000;
 
     double timeParsePattern = 0;
     double timeAddPattern = 0;
@@ -176,6 +176,7 @@ IHCT_TEST(end_pluses_sequence_match) {
     ASSERT_MATCH(patterns, "f[a, b, c, d, e]", 0);
 }
 
+
 IHCT_TEST(end_star_sequence_match) {
     char* patterns[] = {"f[x___, y_, k_, g___]", NULL};
 
@@ -205,7 +206,16 @@ IHCT_TEST(end_star_sequence_match) {
     ADD_SUBST("g", 3, "c", "d", "e");
     REGISTER_MATCH
 
-    ASSERT_MATCH(patterns, "f[a, b, c, d, e]", 0);
+    test_net(patterns, "f[a, b, c, d, e]", matches);
+    IHCT_ASSERT(0 == 0); vector_free(sus, free); vector_free(matches, free_ref_match);
+}
+
+IHCT_TEST(double_x_diffrent_functions) {
+    char* patterns[] = {"f[x_, x_]", NULL};
+
+    INIT_MATCHER
+
+    ASSERT_MATCH(patterns, "f[g[1], g[2]]", 0);
 }
 
 

@@ -6,6 +6,9 @@
 #include "stdio.h"
 #include "time.h"
 
+// Uncomment for debugging prints
+// #define PATTERN_DEBUG
+
 match_entry* create_ref_match(char* pattern, vector* v) {
     match_entry* nm = calloc(1, sizeof(match_entry));
     nm->pattern = pattern;
@@ -68,10 +71,10 @@ void free_ref_match(void* var) {
     free(m);
 }
 
-int compare_subst(substitution* su, substitution* suRef, int debug) {
-    if (debug) {
+int compare_subst(substitution* su, substitution* suRef) {
+    #ifdef PATTERN_DEBUG
         printf("From: %s(%s), Len: %d(%d), To: ", su->from, suRef->from, su->len, suRef->len);
-    }
+    #endif
 
     if (su->len != suRef->len) {
         return 0;
@@ -84,9 +87,9 @@ int compare_subst(substitution* su, substitution* suRef, int debug) {
     subjectFlatterm* ft = su->to;
     subjectFlatterm* ftRef = suRef->to;
     for (int j = 0; j < su->len; j++) {
-        if (debug) {
+        #ifdef PATTERN_DEBUG
             printf("%s(%s)", ft->symbol, ftRef->symbol);
-        }
+        #endif
 
         if (strcmp(ft->symbol, ftRef->symbol) != 0) {
             return 0;
@@ -98,17 +101,21 @@ int compare_subst(substitution* su, substitution* suRef, int debug) {
     return 1;
 }
 
-int valid_match(match_entry* match, vector* refmatches, int debug) {
+int valid_match(match_entry* match, vector* refmatches) {
     char str[4096] = "";
     for (int i = 0; i < vector_size(refmatches); i++) {
         str[0] = '\0';
         match_entry* refMatch = (match_entry*)vector_at(refmatches, i);
 
-        if (debug) {
+        #ifdef PATTERN_DEBUG
             //fprintf(str, "MatchID: %d(%d)\n", match->matchid, refMatch->matchid);
-        }
+        #endif
 
         if (match->subst_amount != refMatch->subst_amount) {
+            continue;
+        }
+
+        if (match->pattern != refMatch->pattern) {
             continue;
         }
 
@@ -117,14 +124,14 @@ int valid_match(match_entry* match, vector* refmatches, int debug) {
             substitution* su = &(match->substitutions[i]);
             substitution* suRef = &(refMatch->substitutions[i]);
 
-            if (!compare_subst(su, suRef, debug)) {
+            if (!compare_subst(su, suRef)) {
                 subCorrect = false;
                 break;
             }
             
-            if (debug) {
+            #ifdef PATTERN_DEBUG
                 //fprintf(str, "\n");
-            }
+            #endif
         }
 
         if (subCorrect == true ) {
@@ -138,7 +145,7 @@ int valid_match(match_entry* match, vector* refmatches, int debug) {
     return 0;
 }
 
-int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
+int test_net(char* patterns[], char* subject, vector* refmatches) {
 	d_net* net = net_init();
 
     int i = 0;
@@ -149,12 +156,14 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
     }
 
 	// subjectFlatterm* ft_subject = parse_subject(subject, getSymbolHt(net));
-	
+    	
 	match_set* matches = pattern_match(net, subject);
 
     if (matches_size(matches) != vector_size(refmatches)) {
 
-        fprintf(stderr, "miss match on matches: %ld vs refmatches: %ld\n", matches_size(matches), vector_size(refmatches));
+        #ifdef PATTERN_DEBUG
+            fprintf(stderr, "miss match on matches: %ld vs refmatches: %ld\n", matches_size(matches), vector_size(refmatches));
+        #endif
         net_free(net);
         match_set_free(matches);
         return 1;
@@ -164,7 +173,7 @@ int test_net(char* patterns[], char* subject, vector* refmatches, int debug) {
 
 	for (int i = 0; i < matches_size(matches); i++) {
 		match_entry* match = get_match(matches, i);
-        if (!valid_match(match, refmatches, debug)) {
+        if (!valid_match(match, refmatches)) {
             res = 1;
             break;
         }

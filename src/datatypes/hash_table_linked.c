@@ -6,7 +6,7 @@
 /**
  * Hash-function is bad!
  **/
-static size_t hash_func(char* key, int hash_size) {
+size_t hash_func(char* key, int hash_size) {
    int hash_val = 0;
    int i = 0;
 
@@ -150,7 +150,7 @@ void remove_entry(struct hash_table* ht, char* key ) {
 }
 
 
-static void delete_hash_chain(struct hash_table* ht, int index) {
+void delete_hash_chain(struct hash_table* ht, int index) {
     struct hash_entry* hte_next = ht->entries[index];
 
     while (hte_next != NULL) {
