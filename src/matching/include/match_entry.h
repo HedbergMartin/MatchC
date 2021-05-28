@@ -9,7 +9,7 @@ typedef struct match_set match_set;
 
 typedef struct substitution {
     char* from;
-    subjectFlatterm* to;
+    char** to;
     int len;
 } substitution;
 

@@ -7,7 +7,7 @@
 #include "time.h"
 
 // Uncomment for debugging prints
-// #define PATTERN_DEBUG
+#define PATTERN_DEBUG
 
 match_entry* create_ref_match(char* pattern, vector* v) {
     match_entry* nm = calloc(1, sizeof(match_entry));
@@ -30,27 +30,22 @@ void add_subst(vector* v, char* from, int len, ...) {
     va_list args;
     va_start(args, len);
 
-    subjectFlatterm* prevft = NULL;
-    subjectFlatterm* firstft = NULL;
-    for (int i = 0; i < len; i++) {
-        char* to = va_arg(args, char*);
-        
-        subjectFlatterm* ft = calloc(1, sizeof(subjectFlatterm));
-        ft->symbol = to;
-
-        if (firstft == NULL) {
-            firstft = ft;
-        }
-        if (prevft != NULL) {
-            prevft->skip = ft;
-        }
-        prevft = ft;
-    }
-
     substitution* s = malloc(sizeof(substitution));
     s->from = from;
-    s->to = firstft;
+    s->to = NULL;
     s->len = len;
+
+    if (len > 0) {
+        char** subst = malloc(len * sizeof(char*));
+
+        for (int i = 0; i < len; i++) {
+            char* to = va_arg(args, char*);
+            
+            subst[i] = to;
+        }
+        s->to = subst;
+    }
+
     
     vector_push_back(v, s);
  
@@ -60,12 +55,7 @@ void add_subst(vector* v, char* from, int len, ...) {
 void free_ref_match(void* var) {
     match_entry* m = (match_entry*)var;
     for (int i = 0; i < m->subst_amount; i++) {
-        subjectFlatterm* ft = m->substitutions[i].to;
-        for (int l = 0; l < m->substitutions[i].len; l++) {
-            subjectFlatterm* next = ft->skip;
-            free(ft);
-            ft = next;
-        }
+        free(m->substitutions[i].to);
     }
     free(m->substitutions);
     free(m);
@@ -84,18 +74,16 @@ int compare_subst(substitution* su, substitution* suRef) {
         return 0;
     }
 
-    subjectFlatterm* ft = su->to;
-    subjectFlatterm* ftRef = suRef->to;
+    char** fullNames = su->to;
+    char** fullNamesRef = suRef->to;
     for (int j = 0; j < su->len; j++) {
         #ifdef PATTERN_DEBUG
-            printf("%s(%s)", ft->symbol, ftRef->symbol);
+            printf("%s(%s)", fullNames[j], fullNamesRef[j]);
         #endif
 
-        if (strcmp(ft->symbol, ftRef->symbol) != 0) {
+        if (strcmp(fullNames[j], fullNamesRef[j]) != 0) {
             return 0;
         }
-        ft = ft->skip;
-        ftRef = ftRef->skip;
     }
 
     return 1;

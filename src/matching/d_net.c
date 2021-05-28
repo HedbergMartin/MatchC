@@ -145,11 +145,19 @@ int strCmps = 0;
 /**
  * return int 0 for invalid, 1 for existing, 2 for new
  */
-int is_valid_match(int patternId, subjectFlatterm* sf, int sfLen, sub_arr_entry* s_arr) {
+int is_valid_match(int patternId, subjectFlatterm* sf, int sfLen, sub_arr_entry* s_arr, bool fullNameIdMatching) {
     
     sub_arr_entry* entry = &s_arr[patternId];
 
     if (entry->len == 0) {
+
+        fprintf(stderr, "Trying to match to :");
+        for (int i = 0; i < sfLen; i++) {
+            
+            fprintf(stderr, "%s, ", sf->fullName[0]);
+            sf = sf->skip;
+        }
+        fprintf(stderr, "\n");
         return 2;
     }
 
@@ -161,11 +169,18 @@ int is_valid_match(int patternId, subjectFlatterm* sf, int sfLen, sub_arr_entry*
 
     for (int i = 0; i < entry->len; i++) {
 
-        if (sfMatch->id != sf->id) {
-            return 0;
+        if (fullNameIdMatching) {
+            if (sfMatch->fullNameId != sf->fullNameId) {
+                return 0;
+            }
+        } else {
+            if (sfMatch->id != sf->id) {
+                return 0;
+            }
         }
-        sfMatch = sfMatch->next;
-        sf = sf->next;
+        
+        sfMatch = sfMatch->skip;
+        sf = sf->skip;
     }
     return 1;
 }
@@ -247,7 +262,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
             subnet = (net_branch*)subnet_data[i];
             if (subnet->m_type == MT_STAR) {
 
-                switch (is_valid_match(subnet->id, NULL, -1, s_arr)) {
+                switch (is_valid_match(subnet->id, NULL, -1, s_arr, true)) {
                 case 1:
                     /*time1End = clock();
                     time1 += (double)(time1End - time1Start) / CLOCKS_PER_SEC;*/
@@ -295,7 +310,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                 }
                 continue;
             } else if (f_type == FT_PREFIX && subnet->m_type == MT_VARIABLE && subnet->f_type == FT_PREFIX) {
-                switch (is_valid_match(subnet->id, t, 1, s_arr)) {
+                switch (is_valid_match(subnet->id, t, 1, s_arr, false)) {
                 case 1:
                     // Matching generic function name
                     /*time23End = clock();
@@ -322,7 +337,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
 
             if (subnet->m_type == MT_STAR) {
 
-                switch (is_valid_match(subnet->id, NULL, -1, s_arr)) {
+                switch (is_valid_match(subnet->id, NULL, -1, s_arr, true)) {
                 case 1:
                     /*time22End = clock();
                     time22 += (double)(time22End - time22Start) / CLOCKS_PER_SEC;*/
@@ -346,7 +361,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
             } 
             //time23Start = clock();
 
-            switch (is_valid_match(subnet->id, t, 1, s_arr)) {
+            switch (is_valid_match(subnet->id, t, 1, s_arr, true)) {
             case 1:
                 // Variable substitution matching, replace whole term.
                 /*time23End = clock();
@@ -381,7 +396,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                         //time3Start = clock();
                         // t = slå ihop allt mellan nuvarande term och i
                         //matcha med den substitutionen
-                        switch (is_valid_match(subnet->id, t, len, s_arr)) {
+                        switch (is_valid_match(subnet->id, t, len, s_arr, true)) {
                         case 1:
                             /*time3End = clock();
                             time3 += (double)(time3End - time3Start) / CLOCKS_PER_SEC;*/

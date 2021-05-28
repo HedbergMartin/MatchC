@@ -48,7 +48,7 @@ char* parse_name(char* subject, int start, int end) {
     return name;
 }
 
-struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, int* index, hash_table* subjectHt, hash_table* symbolHt, int nextId, int* variableCount) {
+struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, int* index, hash_table* subjectHt, hash_table* symbolHt, int* nextId, int* variableCount) {
     int start = *index;
     int end = *index;
 
@@ -66,7 +66,7 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
                 int id = hash_table_get_entry(symbolHt, name);
 
                 if (id == -1) {
-                    id = hash_table_insert_if_absent(subjectHt, name, &nextId);
+                    id = hash_table_insert_if_absent(subjectHt, name, nextId);
                 }
                 struct subjectFlatterm* current = new_subjectFlatterm(name);
                 *variableCount += 1;
@@ -135,21 +135,77 @@ int full_name_func(subjectFlatterm* start, subjectFlatterm* parent, char* buffer
             pos += 1;
             current = current->skip;
         } else {
+            full_name_func(current->next, parent, buffer, pos);
             current = current->next;
         }
 
         if (parent->skip != current) {
-            memcpy(&buffer[pos], ", ", 2);
-            pos += 2;
+            memcpy(&buffer[pos], ",", 1);
+            pos += 1;
         }
         
     }
     return pos;
 }
 
-void full_name_init(char* subject, subjectFlatterm* first, int variableCount) {
+//Non function shit!!!
+int full_name_init(char* subject, subjectFlatterm* current, subjectFlatterm* parent, subjectFlatterm* first, int index, hash_table* subjectHt, int* nextId, char* buffer) {
+
+    if (current == NULL) {
+        return index - 1;
+    }
+
+    if (current != parent->skip) {
+
+        if (current->f_type != FT_PREFIX) {
+            first->fullName[index] = current->symbol;
+            current->fullNameId = current->id;
+            current->fullName = &first->fullName[index];    
+        }
+        index = full_name_init(subject, current->skip, parent, first, index + 1, subjectHt, nextId, buffer);
+    }
+    
+    if (current->f_type == FT_PREFIX) {
+        int len = full_name_func(current, current, buffer, 0);    
+        char* fullName = malloc(len + 1);
+        memcpy(fullName, buffer, len);
+        fullName[len] = '\0';
+        first->fullName[index] = fullName;
+        current->fullNameId = hash_table_insert_if_absent(subjectHt, fullName, nextId);
+        current->fullName = &first->fullName[index];
+
+        index = full_name_init(subject, current->next, current, first, index + 1, subjectHt, nextId, buffer);
+    }
+
+    return index;
+        
+    /*} else {
+        
+        first->fullName[index] = current->symbol;
+        current->fullNameId = current->id;
+        current->fullName = &first->fullName[index];
+        *index += 1;
+        full_name_init(subject, current->skip, first, index, subjectHt, nextId, buffer);
+        
+    }
+    
+    current = current->next;*/
+
+}
+
+/*void full_name_init(subjectFlatterm* parent) {
+    subjectFlatterm;
+    subjectFlatterm* end = current->skip;
+
+    while (current->next != end) {
+
+        current
+    }
+}*/
+
+/*void full_name_init(char* subject, subjectFlatterm* first, int variableCount, hash_table* subjectHt, int* nextId) {
     int subjLen = strlen(subject);
-    char* buffer = calloc(1, sizeof(char) * subjLen);
+    char* buffer = calloc(1, sizeof(char) * subjLen + 1);
 
     first->fullName = malloc(sizeof(char**) * variableCount);
     subjectFlatterm* current = first;
@@ -163,15 +219,17 @@ void full_name_init(char* subject, subjectFlatterm* first, int variableCount) {
             memcpy(fullName, buffer, len);
             fullName[len] = '\0';
             first->fullName[i] = fullName;
+            current->fullNameId = hash_table_insert_if_absent(subjectHt, fullName, nextId);
         } else {
             first->fullName[i] = current->symbol;
+            current->fullNameId = current->id;
         }
         current->fullName = &first->fullName[i];
         current = current->next;
     }
 
     free(buffer);
-}
+}*/
 
 // symbolHt should be const here
 subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt, int nextId) {
@@ -179,13 +237,23 @@ subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt, int nextId) 
     int index = 0;
     int variableCount = 0;
     hash_table* subjectHt = hash_table_init(500);
-    subjectFlatterm* first = _parse_subject(subject, NULL, &index, subjectHt, symbolHt, nextId, &variableCount);
+    subjectFlatterm* first = _parse_subject(subject, NULL, &index, subjectHt, symbolHt, &nextId, &variableCount);
 
     while (first->parent != NULL) {
         first = first->parent;
     }
 
-    full_name_init(subject, first, variableCount);
+    int subjLen = strlen(subject);
+    char* buffer = calloc(1, sizeof(char) * subjLen + 1);
+    first->fullName = malloc(sizeof(char**) * variableCount);
+    //int full_name_init(char* subject, subjectFlatterm* current, subjectFlatterm* parent, subjectFlatterm* first, int index, hash_table* subjectHt, int* nextId, char* buffer) 
+    full_name_init(subject, first, first, first, 0, subjectHt, &nextId, buffer);
+
+    free(buffer);
+
+    for (int i = 0; i < variableCount; i++) {
+        fprintf(stderr, "%s\n", first->fullName[i]);
+    }
     
     hash_table_free(subjectHt);
     return first;
@@ -197,7 +265,7 @@ void print_subjectFlatterm(struct subjectFlatterm* sf) {
     printf("Next order: ");
 
     while (current != NULL) {
-        printf("%s(%d)(%s), ", current->symbol, current->id, current->fullName[0]);
+        printf("%s(%d)(%s(%d)), ", current->symbol, current->id, current->fullName[0], current->fullNameId);
 
         current = current->next;
     }
