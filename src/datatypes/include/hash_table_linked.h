@@ -15,12 +15,12 @@ typedef struct hash_table {
     int size;
 }hash_table;
 
-struct hash_table* create_hash_table(int hash_size);
-int insert_if_absent(struct hash_table* ht, char* key, int* nextId);
-void insert_entry_unsafe(struct hash_table* ht, char* key, int id);
-void insert_entry(struct hash_table* ht, char* key, int id);
-int get_entry(struct hash_table* ht, char* key);
-void remove_entry(struct hash_table* ht, char* key);
-void delete_hash_table(struct hash_table* ht);
+struct hash_table* hash_table_init(int hash_size);
+int hash_table_insert_if_absent(struct hash_table* ht, char* key, int* nextId);
+void hash_table_insert_entry_unsafe(struct hash_table* ht, char* key, int id);
+void hash_table_insert_entry(struct hash_table* ht, char* key, int id);
+int hash_table_get_entry(struct hash_table* ht, char* key);
+void hash_table_remove_entry(struct hash_table* ht, char* key);
+void hash_table_free(struct hash_table* ht);
 
 #endif

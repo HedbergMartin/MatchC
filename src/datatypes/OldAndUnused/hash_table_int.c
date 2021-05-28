@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <string.h>
 
-static size_t hash_func(int key, int hash_size) {
+static size_t _hash_func(int key, int hash_size) {
    return (key % hash_size);
 }
 
-struct hash_table* create_hash_table(int hash_size) {
+struct hash_table* hash_table_init(int hash_size) {
     struct hash_table* ht = calloc(1, sizeof(struct hash_table) + hash_size * sizeof(struct hash_entry)); //Weird allocation but cache-hit efficient
     ht->entries = ht + 1;
     ht->size = hash_size;    
@@ -20,7 +20,7 @@ static void put_hash_entry(int key, void* val, struct hash_entry hte) {
     hte.val = val;
 }
 
-static struct hash_entry find_entry(struct hash_table* ht, int key, size_t hash_val) {
+static struct hash_entry _hash_table_find_entry(struct hash_table* ht, int key, size_t hash_val) {
     struct hash_entry hte_temp = ht->entries[hash_val];
     size_t i = 0;
 
@@ -43,10 +43,10 @@ static struct hash_entry find_entry(struct hash_table* ht, int key, size_t hash_
  * 
 * @return -1 on already occupied hash key, -2 on NULL val
  **/
-int insert_entry(struct hash_table* ht, int key, void* val) {
-    size_t hash_val = hash_func(key, ht->size);
+int hash_table_insert_entry(struct hash_table* ht, int key, void* val) {
+    size_t hash_val = _hash_func(key, ht->size);
 
-    struct hash_entry hte_temp = find_entry(ht, key, hash_val);
+    struct hash_entry hte_temp = _hash_table_find_entry(ht, key, hash_val);
 
     if (hte_temp.key != NULL) {
         return -1; //Hash key already occupied
@@ -63,15 +63,15 @@ int insert_entry(struct hash_table* ht, int key, void* val) {
  * 
  * @return -1 on invalid key
  **/
-void* get_entry(struct hash_table* ht, int key) {
-    size_t hash_val = hash_func(key, ht->size);
-    struct hash_entry hte_temp = find_entry(ht, key, hash_val);
+void* hash_table_get_entry(struct hash_table* ht, int key) {
+    size_t hash_val = _hash_func(key, ht->size);
+    struct hash_entry hte_temp = _hash_table_find_entry(ht, key, hash_val);
 
     return hte_temp.val;
 }
 
 
-void delete_hash_table(struct hash_table* ht) {
+void hash_table_free(struct hash_table* ht) {
 
     for (int i = 0; i < ht->size; i++) {
         

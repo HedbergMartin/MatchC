@@ -6,10 +6,12 @@
 typedef struct subjectFlatterm {
     char* symbol;
     int id;
+    int fullNameId;
     struct subjectFlatterm* next;
     struct subjectFlatterm* skip;
     struct subjectFlatterm* parent;
     enum functype f_type;
+    char** fullName;
 }subjectFlatterm;
 
 subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt, int nextId);
