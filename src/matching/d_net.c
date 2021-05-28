@@ -294,6 +294,29 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                     }
                 }
                 continue;
+            } else if (f_type == FT_PREFIX && subnet->m_type == MT_VARIABLE && subnet->f_type == FT_PREFIX) {
+                switch (is_valid_match(subnet->id, t, 1, s_arr)) {
+                case 1:
+                    // Matching generic function name
+                    /*time23End = clock();
+                    time23 += (double)(time23End - time23Start) / CLOCKS_PER_SEC;*/
+                    _match(net, subnet, t->next, s_arr, sv, matches);
+                    break;
+                case 2:
+                    int_vector_push_back(sv, subnet->id);
+                    s_arr[subnet->id].to = t;
+                    s_arr[subnet->id].len = 1;
+                    _match(net, subnet, t->next, s_arr, sv, matches);
+
+                    s_arr[subnet->id].to = NULL;
+                    s_arr[subnet->id].len = 0;
+                    int_vector_pop_back(sv);
+                    break;
+                case 0: //invalid match;
+                    break;
+                }
+                
+                continue;
             } 
             //time22Start = clock();
 
@@ -325,34 +348,20 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
 
             switch (is_valid_match(subnet->id, t, 1, s_arr)) {
             case 1:
-                if (f_type == FT_PREFIX && subnet->m_type == MT_VARIABLE && subnet->f_type == FT_PREFIX) {
-                    // Matching generic function name
-                    /*time23End = clock();
-                    time23 += (double)(time23End - time23Start) / CLOCKS_PER_SEC;*/
-                    _match(net, subnet, t->next, s_arr, sv, matches);
-                } else {
-                    // Variable substitution matching, replace whole term.
-                    /*time23End = clock();
-                    time23 += (double)(time23End - time23Start) / CLOCKS_PER_SEC;*/
-                    _match(net, subnet, t->skip, s_arr, sv, matches);
-                }
+                // Variable substitution matching, replace whole term.
+                /*time23End = clock();
+                time23 += (double)(time23End - time23Start) / CLOCKS_PER_SEC;*/
+                _match(net, subnet, t->skip, s_arr, sv, matches);
                 break;
             case 2:
                 int_vector_push_back(sv, subnet->id);
                 s_arr[subnet->id].to = t;
                 s_arr[subnet->id].len = 1;
 
-                if (f_type == FT_PREFIX && subnet->m_type == MT_VARIABLE && subnet->f_type == FT_PREFIX) {
-                    // Matching generic function name
-                    /*time23End = clock();
-                    time23 += (double)(time23End - time23Start) / CLOCKS_PER_SEC;*/
-                    _match(net, subnet, t->next, s_arr, sv, matches);
-                } else {
-                    // Variable substitution matching, replace whole term.
-                    /*time23End = clock();
-                    time23 += (double)(time23End - time23Start) / CLOCKS_PER_SEC;*/
-                    _match(net, subnet, t->skip, s_arr, sv, matches);
-                }
+                // Variable substitution matching, replace whole term.
+                /*time23End = clock();
+                time23 += (double)(time23End - time23Start) / CLOCKS_PER_SEC;*/
+                _match(net, subnet, t->skip, s_arr, sv, matches);
 
                 s_arr[subnet->id].to = NULL;
                 s_arr[subnet->id].len = 0;
