@@ -218,6 +218,23 @@ IHCT_TEST(double_x_diffrent_functions) {
     ASSERT_MATCH(patterns, "f[g[1], g[2]]", 0);
 }
 
+IHCT_TEST(variable_function_match2) {
+    char* patterns[] = {"f[x_]", NULL};
+
+    INIT_MATCHER
+
+    ASSERT_MATCH(patterns, "f[g, 1]", 0);
+}
+
+IHCT_TEST(sequence_mid_function) {
+    char* patterns[] = {"f[x___]", NULL};
+
+    INIT_MATCHER
+    ADD_SUBST("x", 5, "g", "1", "h[a[]]", "2", "1");
+
+    ASSERT_MATCH(patterns, "f[g, 1, h[a[]], 2, 1]", 0);
+}
+
 
 int main(int argc, char **argv) {
     return IHCT_RUN(argc, argv);
