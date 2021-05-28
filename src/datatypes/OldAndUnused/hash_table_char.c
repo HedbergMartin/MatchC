@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static size_t hash_func(char* key, size_t key_size, int hash_size) {
+static size_t _hash_func(char* key, size_t key_size, int hash_size) {
    int hash_val = 0;
 
    for (size_t i = 0; i < key_size; i++) {
@@ -44,7 +44,7 @@ static void put_hash_entry(char* key, void* val, size_t key_size, struct hash_en
     hte->val = val;
 }
 
-static struct hash_entry* find_entry(struct hash_table* ht, char* key, size_t key_size, size_t hash_val) {
+static struct hash_entry* _hash_table_find_entry(struct hash_table* ht, char* key, size_t key_size, size_t hash_val) {
     struct hash_entry hte_temp = ht->entries[hash_val];
     size_t i = 0;
 
@@ -68,8 +68,8 @@ static struct hash_entry* find_entry(struct hash_table* ht, char* key, size_t ke
  * @return -1 on already occupied hash key
  **/
 int hash_table_insert(struct hash_table* ht, char* key, void* val, size_t key_size) {
-    size_t hash_val = hash_func(key, key_size, ht->size);
-    struct hash_entry* hte_temp = find_entry(ht, key, key_size, hash_val);
+    size_t hash_val = _hash_func(key, key_size, ht->size);
+    struct hash_entry* hte_temp = _hash_table_find_entry(ht, key, key_size, hash_val);
 
     //fprintf(stderr, "%s\n", hte_temp.key);
 
@@ -90,8 +90,8 @@ int hash_table_insert(struct hash_table* ht, char* key, void* val, size_t key_si
  * @return NULL on invalid key
  **/
 void* hash_table_get(struct hash_table* ht, char* key, size_t key_size) {
-    size_t hash_val = hash_func(key, key_size, ht->size);
-    struct hash_entry* hte_temp = find_entry(ht, key, key_size, hash_val);
+    size_t hash_val = _hash_func(key, key_size, ht->size);
+    struct hash_entry* hte_temp = _hash_table_find_entry(ht, key, key_size, hash_val);
 
     if (hte_temp->key == NULL || strcmp(key, hte_temp->key) != 0) {
         return NULL;

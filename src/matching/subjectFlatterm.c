@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include "subjectFlatterm.h"
 #include "hash_table_linked.h"
 
@@ -47,7 +48,7 @@ char* parse_name(char* subject, int start, int end) {
     return name;
 }
 
-struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, int* index, hash_table* subjectHt, hash_table* symbolHt, int nextId) {
+struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, int* index, hash_table* subjectHt, hash_table* symbolHt, int nextId, int* variableCount) {
     int start = *index;
     int end = *index;
 
@@ -62,12 +63,13 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
             start = *index + 1;
 
             if (name != NULL) { 
-                int id = get_entry(symbolHt, name);
+                int id = hash_table_get_entry(symbolHt, name);
 
                 if (id == -1) {
-                    id = insert_if_absent(subjectHt, name, &nextId);
+                    id = hash_table_insert_if_absent(subjectHt, name, &nextId);
                 }
                 struct subjectFlatterm* current = new_subjectFlatterm(name);
+                *variableCount += 1;
                 current->id = id;
                 current->parent = parent;
 
@@ -93,7 +95,7 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
 
                 if (subject[*index] == '[') {
                     current->f_type = FT_PREFIX;
-                    prev = _parse_subject(subject, current, index, subjectHt, symbolHt, nextId);
+                    prev = _parse_subject(subject, current, index, subjectHt, symbolHt, nextId, variableCount);
                     current->skip = NULL;
                     nextIsSkip = true;
                     start = *index + 1;
@@ -115,90 +117,78 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
     return prev;
 }
 
+
+int full_name_func(subjectFlatterm* start, subjectFlatterm* parent, char* buffer, int pos) {
+    subjectFlatterm* current = start;
+
+    while (parent->skip != current) {
+        int symbolLen = strlen(current->symbol);
+
+        memcpy(&buffer[pos], current->symbol, symbolLen);
+        pos += symbolLen;
+
+        if (current->f_type == FT_PREFIX) {
+            memcpy(&buffer[pos], "[", 1);
+            pos += 1;
+            pos = full_name_func(current->next, current, buffer, pos);
+            memcpy(&buffer[pos], "]", 1);
+            pos += 1;
+            current = current->skip;
+        } else {
+            current = current->next;
+        }
+
+        if (parent->skip != current) {
+            memcpy(&buffer[pos], ", ", 2);
+            pos += 2;
+        }
+        
+    }
+    return pos;
+}
+
+void full_name_init(char* subject, subjectFlatterm* first, int variableCount) {
+    int subjLen = strlen(subject);
+    char* buffer = calloc(1, sizeof(char) * subjLen);
+
+    first->fullName = malloc(sizeof(char**) * variableCount);
+    subjectFlatterm* current = first;
+
+    for (int i = 0; i < variableCount; i++) {
+
+        if (current->f_type == FT_PREFIX) {
+            int len = full_name_func(current, current, buffer, 0);    
+
+            char* fullName = malloc(len + 1);
+            memcpy(fullName, buffer, len);
+            fullName[len] = '\0';
+            first->fullName[i] = fullName;
+        } else {
+            first->fullName[i] = current->symbol;
+        }
+        current->fullName = &first->fullName[i];
+        current = current->next;
+    }
+
+    free(buffer);
+}
+
 // symbolHt should be const here
 subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt, int nextId) {
+    
     int index = 0;
-    hash_table* subjectHt = create_hash_table(500);
-    subjectFlatterm* first = _parse_subject(subject, NULL, &index, subjectHt, symbolHt, nextId);
-    delete_hash_table(subjectHt);
-
-    //fprintf(stderr, "Subject: %s\n", subject);
+    int variableCount = 0;
+    hash_table* subjectHt = hash_table_init(500);
+    subjectFlatterm* first = _parse_subject(subject, NULL, &index, subjectHt, symbolHt, nextId, &variableCount);
 
     while (first->parent != NULL) {
         first = first->parent;
     }
 
-    //first->skip = NULL;
-
-    return first;
-    /*int index = 0;
-    int start = 0;
-    int end = 0;
-
-    struct subjectFlatterm* first = NULL;
-    struct subjectFlatterm* prev = NULL;
-    struct subjectFlatterm* skip = NULL;
-    struct subjectFlatterm* parent = NULL;
-    int skips = 0;
+    full_name_init(subject, first, variableCount);
     
-    while (subject[index] != '\0') {
-
-        if (subject[index] == ',' || subject[index] == '[' || subject[index] == ']') {
-            end = index;
-            char* name = parse_name(subject, start, end);
-            
-
-            if (skip != NULL) {
-                fprintf(stderr, "current skip: %s\n", skip->symbol);
-            }
-            
-            start = index + 1;
-            
-            if (name != NULL) {
-                struct subjectFlatterm* current = new_subjectFlatterm(name);
-                fprintf(stderr, "name for current: %s\n", current->symbol);
-                current->parent = parent;
-
-                if (first == NULL) {
-                    first = current;
-                }
-
-                if (prev != NULL) {
-                    prev->next = current;
-                }
-
-                if (skips != 0) {
-
-                    for (int i = 0; i < skips + 1; i++) {
-                        fprintf(stderr, "Skip parent = %p\n", skip);
-                        skip->skip = current;
-                        skip = skip->parent;
-                    }
-                    skips = 0;
-                } else if (skip != NULL) {
-                    skip->skip = current;
-                }
-
-                skip = current;
-                if (subject[index] == '[') {
-                    skip = NULL;
-                    parent = current;
-                } 
-                
-                prev = current;
-            }
-
-            if (subject[index] == ']') {
-                skips += 1;
-
-                if (parent != NULL) {
-                    parent = parent->parent;
-                }
-            }
-        }
-        index += 1;
-    }
-    return first;*/
+    hash_table_free(subjectHt);
+    return first;
 }
 
 void print_subjectFlatterm(struct subjectFlatterm* sf) {
@@ -207,7 +197,7 @@ void print_subjectFlatterm(struct subjectFlatterm* sf) {
     printf("Next order: ");
 
     while (current != NULL) {
-        printf("%s(%d), ", current->symbol, current->id);
+        printf("%s(%d)(%s), ", current->symbol, current->id, current->fullName[0]);
 
         current = current->next;
     }
@@ -242,11 +232,17 @@ void print_subjectFlatterm(struct subjectFlatterm* sf) {
 
 
 void subjectFlatterm_free(struct subjectFlatterm* ft) {
+    char** fullName = ft->fullName;
 
     while (ft != NULL) {
         struct subjectFlatterm* next = ft->next;
         free(ft->symbol);
+
+        if (ft->f_type == FT_PREFIX) {
+            free(ft->fullName[0]);
+        }
         free(ft);
         ft = next;
     }
+    free(fullName);
 }

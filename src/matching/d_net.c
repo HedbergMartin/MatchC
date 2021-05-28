@@ -43,7 +43,7 @@ net_branch* branch_init() {
 d_net* net_init() {
     d_net* dn = malloc(sizeof(d_net));
     dn->root = branch_init();
-    dn->symbolHt = create_hash_table(500);
+    dn->symbolHt = hash_table_init(500);
     dn->idLookup = vector_init();
     vector_push_back(dn->idLookup, NULL);
     dn->nextId = 1;
@@ -60,7 +60,7 @@ void _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
 
     net_branch* subnet = NULL;
     while (t) {
-        int id = insert_if_absent(dn->symbolHt, t->symbol, &dn->nextId);
+        int id = hash_table_insert_if_absent(dn->symbolHt, t->symbol, &dn->nextId);
 
         if ((subnet = find_subnet(b, id, t->f_type)) != NULL) {
             free(t->symbol);
@@ -413,7 +413,7 @@ match_set* pattern_match(d_net* dn, char* subject) {
     sub_arr_entry* s_arr = calloc(vector_size(dn->idLookup), sizeof(sub_arr_entry)); //Todo maybe move into dnet
 
 	subjectFlatterm* ft_subject = parse_subject(subject, dn->symbolHt, dn->nextId); //!Note if f[x + y]
-	// print_subjectFlatterm(ft_subject);
+	print_subjectFlatterm(ft_subject);
 
     _match(dn, dn->root, ft_subject, s_arr, sv, matches);
 
@@ -449,7 +449,7 @@ void _branch_free(void* netVoid) {
 void net_free(d_net* net) {
     vector_free(net->root->subnets, _branch_free);
     free(net->root);
-    delete_hash_table(net->symbolHt);
+    hash_table_free(net->symbolHt);
     vector_free(net->idLookup, NULL);
     free(net);
     
