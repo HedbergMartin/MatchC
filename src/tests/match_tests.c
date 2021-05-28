@@ -228,8 +228,7 @@ IHCT_TEST(end_star_sequence_match) {
     ADD_SUBST("g", 3, "c", "d", "e");
     REGISTER_MATCH
 
-    test_net(patterns, "f[a, b, c, d, e]", matches);
-    IHCT_ASSERT(0 == 0); vector_free(sus, free); vector_free(matches, free_ref_match);
+    ASSERT_MATCH(patterns, "f[a, b, c, d, e]", 0);
 }
 
 IHCT_TEST(double_x_diffrent_functions) {

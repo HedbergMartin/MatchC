@@ -4,6 +4,7 @@
 #include <string.h>
 #include "subjectFlatterm.h"
 #include "hash_table_linked.h"
+#include "vector.h"
 
 struct subjectFlatterm* new_subjectFlatterm(char* symbol) {
     struct subjectFlatterm* sf = calloc(1, sizeof(struct subjectFlatterm));
@@ -117,6 +118,59 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
     return prev;
 }
 
+void full_name_parsing(char** fullName, int index, subjectFlatterm* parent) {
+    subjectFlatterm* current = parent;
+
+    if (current->f_type != FT_PREFIX) {
+        fprintf(stderr, "fullname parent should be prefix function!!\n");
+        return;
+    }
+
+    
+}
+
+char* dive(subjectFlatterm* current, char** fullName, int* index, char* buffer) {
+    if (current->f_type == FT_PREFIX) {
+        int startindex = *index;
+        subjectFlatterm* ft = current->next;
+        vector* v = vector_init();
+
+        while (ft != current->skip) {
+            char* ret = NULL;
+            if ((ret = dive(ft, fullName, index, buffer)) != NULL) {
+                vector_push_back(v, ret);
+            }
+        }
+
+        ft = current->next;
+        while (ft != current->skip) {
+            add_fullname(ft, fullName, index, buffer);
+        }
+
+        // int len = full_name_func(current, current, buffer, 0);
+        // char* fullName = malloc(len + 1);
+        // memcpy(fullName, buffer, len);
+        // fullName[len] = '\0';
+        // first->fullName[index] = fullName;
+        // current->fullNameId = hash_table_insert_if_absent(subjectHt, fullName, nextId);
+        // current->fullName = &first->fullName[index];
+
+    } else {
+        current->fullNameId = current->id;
+        return current->symbol;
+    }
+}
+
+void add_fullname(subjectFlatterm* current, char** fullName, int* index, char* buffer) {
+    if (current->f_type == FT_PREFIX) {
+
+    } else {
+        fullName[*index] = current->symbol;
+        current->fullNameId = current->id;
+    }
+    current->fullName = &(fullName[*index]);
+    *index++;
+}
 
 int full_name_func(subjectFlatterm* start, subjectFlatterm* parent, char* buffer, int pos) {
     subjectFlatterm* current = start;
