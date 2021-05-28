@@ -14,16 +14,15 @@ int main(int argc, char* argv[]) {
 	//flatterm* ft = parsePattern("f[p_[c[]], t_ + 4 * d] := x");
   //flatterm* ft_subject = parsePattern("f(a, 2, c) := x");
 	//add_pattern(net, parsePattern("f(x_(2), y_) := x"));
-	flatterm* ft = parsePattern("f[u[y_]] := x");	//!Remove :=
+	flatterm* ft = parsePattern("f[x_, x_] := x");	//!Remove :=
 	// flatterm_print(ft);
 	// fprintf(stderr, "done\n");
 	//add_pattern(net, parsePattern("f[x___, y__] := x"));
 	add_pattern(net, ft);
-	add_pattern(net, parsePattern("f[2, a_] := x"));
 	
 	printf("Net: \n");
 	print_net(net);
-	match_set* matches = pattern_match(net, "f[u[p]]");
+	match_set* matches = pattern_match(net, "f[g[1], g[2]]");
 	printf("-----\nMatches:\n");
 
 	for (int i = 0; i < matches_size(matches); i++) {
@@ -34,7 +33,7 @@ int main(int argc, char* argv[]) {
 			printf("From: %s, To: ", su->from);
 			subjectFlatterm* ft = su->to;
 			for (int j = 0; j < su->len; j++) {
-				printf("%s, ", ft[j]);
+				printf("%s, ", ft->symbol);
 				ft = ft->skip;
 			}
 			printf("\n");
