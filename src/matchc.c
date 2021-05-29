@@ -22,18 +22,18 @@ int main(int argc, char* argv[]) {
 	
 	printf("Net: \n");
 	print_net(net);
-	match_set* matches = pattern_match(net, "f[g[1], g[2]]");
+	match_set* matches = pattern_match(net, "f[g[1], g[1]]");
 	printf("-----\nMatches:\n");
 
 	for (int i = 0; i < matches_size(matches); i++) {
 		match_entry* match = get_match(matches, i);
 		printf("MatchID: %s\n", match->pattern);
-		for (int i = 0; i < match->subst_amount; i++) {
-			substitution* su = &(match->substitutions[i]);
+		for (int k = 0; k < match->subst_amount; k++) {
+			substitution* su = &(match->substitutions[k]);
 			printf("From: %s, To: ", su->from);
 			char** ft = su->to;
 			for (int j = 0; j < su->len; j++) {
-				printf("%s, ", ft[j]);	
+				printf("%s, ", ft[j]);
 			}
 			printf("\n");
 		}

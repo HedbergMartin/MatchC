@@ -129,23 +129,64 @@ void full_name_parsing(char** fullName, int index, subjectFlatterm* parent) {
     
 }
 
-char* dive(subjectFlatterm* current, char** fullName, int* index, char* buffer) {
+void add_fullname(subjectFlatterm* current, char* name, char** fullName, int* index, hash_table* subjectHt, int* nextId) {
+    fullName[*index] = name;
     if (current->f_type == FT_PREFIX) {
-        int startindex = *index;
+        current->fullNameId = hash_table_insert_if_absent(subjectHt, name, nextId);
+    } else {
+        current->fullNameId = current->id;
+    }
+    current->fullName = &(fullName[*index]);
+    (*index)++;
+}
+
+char* dive(subjectFlatterm* current, char** fullName, int* index, char* buffer, hash_table* subjectHt, int* nextId) {
+    if (current->f_type == FT_PREFIX) {
         subjectFlatterm* ft = current->next;
         vector* v = vector_init();
 
         while (ft != current->skip) {
-            char* ret = NULL;
-            if ((ret = dive(ft, fullName, index, buffer)) != NULL) {
-                vector_push_back(v, ret);
-            }
+            vector_push_back(v, dive(ft, fullName, index, buffer, subjectHt, nextId));
+            ft = ft->skip;
         }
 
+        int pos = 0;
+        int len = strlen(current->symbol);
+        memcpy(buffer, current->symbol, len);
+        pos += len;
+        
+        memcpy(&(buffer[pos]), "[", 1);
+        pos += 1;
+
+        int i = 0;
         ft = current->next;
+        int amount_args = vector_size(v);
         while (ft != current->skip) {
-            add_fullname(ft, fullName, index, buffer);
+            char* argsym = vector_at(v, i);
+            add_fullname(ft, argsym, fullName, index, subjectHt, nextId);
+            
+            int len = strlen(argsym);
+            memcpy(&(buffer[pos]), argsym, len);
+            pos += len;
+
+            i++;
+            if (i != amount_args) {
+                memcpy(&(buffer[pos]), ", ", 2);
+                pos += 2;
+            }
+
+            ft = ft->skip;
         }
+        
+        memcpy(&(buffer[pos]), "]\0", 2);
+        pos += 2;
+
+        char* fullFuncName = malloc(pos * sizeof(char));
+        memcpy(fullFuncName, buffer, pos);
+
+        vector_free(v, NULL);
+
+        return fullFuncName;
 
         // int len = full_name_func(current, current, buffer, 0);
         // char* fullName = malloc(len + 1);
@@ -156,20 +197,8 @@ char* dive(subjectFlatterm* current, char** fullName, int* index, char* buffer) 
         // current->fullName = &first->fullName[index];
 
     } else {
-        current->fullNameId = current->id;
         return current->symbol;
     }
-}
-
-void add_fullname(subjectFlatterm* current, char** fullName, int* index, char* buffer) {
-    if (current->f_type == FT_PREFIX) {
-
-    } else {
-        fullName[*index] = current->symbol;
-        current->fullNameId = current->id;
-    }
-    current->fullName = &(fullName[*index]);
-    *index++;
 }
 
 int full_name_func(subjectFlatterm* start, subjectFlatterm* parent, char* buffer, int pos) {
@@ -298,16 +327,19 @@ subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt, int nextId) 
     }
 
     int subjLen = strlen(subject);
-    char* buffer = calloc(1, sizeof(char) * subjLen + 1);
+    char* buffer = malloc(sizeof(char) * subjLen * 2); //*2 for saftey
     first->fullName = malloc(sizeof(char**) * variableCount);
     //int full_name_init(char* subject, subjectFlatterm* current, subjectFlatterm* parent, subjectFlatterm* first, int index, hash_table* subjectHt, int* nextId, char* buffer) 
-    full_name_init(subject, first, first, first, 0, subjectHt, &nextId, buffer);
+    int fullNameIndex = 0;
+    char* completeFunc = dive(first, first->fullName, &fullNameIndex, buffer, subjectHt, &nextId);
+    add_fullname(first, completeFunc, first->fullName, &fullNameIndex, subjectHt, &nextId);
+    //full_name_init(subject, first, first, first, 0, subjectHt, &nextId, buffer);
 
     free(buffer);
 
-    for (int i = 0; i < variableCount; i++) {
-        fprintf(stderr, "%s\n", first->fullName[i]);
-    }
+    // for (int i = 0; i < variableCount; i++) {
+    //     fprintf(stderr, "%s\n", first->fullName[i]);
+    // }
     
     hash_table_free(subjectHt);
     return first;
