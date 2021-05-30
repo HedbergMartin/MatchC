@@ -6,7 +6,7 @@
 /*
  * A implementation of a C++ vector in C.
  *
- * Author: Martin Hedberg (96mah002@gmail.com)
+ * Author: Martin Hedberg 
  *
  * Version information:
  *   2021-05-13: v1.1, added back poping.
