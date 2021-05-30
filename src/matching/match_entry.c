@@ -26,7 +26,7 @@ match_entry* create_match(char* pattern, int_vector* sv, sub_arr_entry* s_arr, v
             subjectFlatterm* ft = s_arr[from_id].to;
 
             for (int g = 0; g < curr->len; g++) {
-                fprintf(stderr, "asd: %s, %s, %s\n", curr->to[g], ft->symbol, ft->fullName[0]);
+                // fprintf(stderr, "asd: %s, %s, %s\n", curr->to[g], ft->symbol, ft->fullName[0]);
                 ft = ft->next;
             }
             

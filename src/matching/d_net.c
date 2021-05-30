@@ -151,13 +151,13 @@ int is_valid_match(int patternId, subjectFlatterm* sf, int sfLen, sub_arr_entry*
 
     if (entry->len == 0) {
 
-        fprintf(stderr, "Trying to match to :");
+        // fprintf(stderr, "Trying to match to :");
         for (int i = 0; i < sfLen; i++) {
             
-            fprintf(stderr, "%s, ", sf->fullName[0]);
+            // fprintf(stderr, "%s, ", sf->fullName[0]);
             sf = sf->skip;
         }
-        fprintf(stderr, "\n");
+        // fprintf(stderr, "\n");
         return 2;
     }
 
@@ -437,7 +437,7 @@ match_set* pattern_match(d_net* dn, char* subject) {
     sub_arr_entry* s_arr = calloc(vector_size(dn->idLookup), sizeof(sub_arr_entry)); //Todo maybe move into dnet
 
 	subjectFlatterm* ft_subject = parse_subject(subject, dn->symbolHt, dn->nextId); //!Note if f[x + y]
-	print_subjectFlatterm(ft_subject);
+	// print_subjectFlatterm(ft_subject);
 
     _match(dn, dn->root, ft_subject, s_arr, sv, matches);
 

@@ -161,6 +161,7 @@ char* dive(subjectFlatterm* current, char** fullName, int* index, char* buffer, 
         int i = 0;
         ft = current->next;
         int amount_args = vector_size(v);
+        (*index) = *index - amount_args + 1;
         while (ft != current->skip) {
             char* argsym = vector_at(v, i);
             add_fullname(ft, argsym, fullName, index, subjectHt, nextId);
@@ -177,6 +178,7 @@ char* dive(subjectFlatterm* current, char** fullName, int* index, char* buffer, 
 
             ft = ft->skip;
         }
+        (*index) = *index - amount_args - 1;
         
         memcpy(&(buffer[pos]), "]\0", 2);
         pos += 2;
@@ -330,7 +332,7 @@ subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt, int nextId) 
     char* buffer = malloc(sizeof(char) * subjLen * 2); //*2 for saftey
     first->fullName = malloc(sizeof(char**) * variableCount);
     //int full_name_init(char* subject, subjectFlatterm* current, subjectFlatterm* parent, subjectFlatterm* first, int index, hash_table* subjectHt, int* nextId, char* buffer) 
-    int fullNameIndex = 0;
+    int fullNameIndex = variableCount - 1;
     char* completeFunc = dive(first, first->fullName, &fullNameIndex, buffer, subjectHt, &nextId);
     add_fullname(first, completeFunc, first->fullName, &fullNameIndex, subjectHt, &nextId);
     //full_name_init(subject, first, first, first, 0, subjectHt, &nextId, buffer);

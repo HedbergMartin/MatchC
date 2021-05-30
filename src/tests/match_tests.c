@@ -4,65 +4,70 @@
 #include "stdio.h"
 #include "testing_utils.h"
 
-// IHCT_TEST(perf_test) {
+IHCT_TEST(perf_test) {
     
-//     char* filenamePatterns = "../../../patterns.txt";
-//     char* filenameSubjects = "../../../subjects.txt";
-//     d_net* net = net_init();
-//     int subjectCount = 1000;
+    char* filenamePatterns = "../../../patterns.txt";
+    char* filenameSubjects = "../../../subjects.txt";
+    d_net* net = net_init();
+    int subjectCount = 100000;
 
-//     double timeParsePattern = 0;
-//     double timeAddPattern = 0;
-//     double timeParseSubject = 0;
-//     double timeMatch = 0;
+    double timeParsePattern = 0;
+    double timeAddPattern = 0;
+    double timeParseSubject = 0;
+    double timeMatch = 0;
 
-//     clock_t matchStart;
-//     clock_t matchEnd;
+    clock_t matchStart;
+    clock_t matchEnd;
  
-//     load_patterns(filenamePatterns, net, &timeParsePattern, &timeAddPattern);
+    load_patterns(filenamePatterns, net, &timeParsePattern, &timeAddPattern);
 
 
-//     subjectFlatterm** subjects = malloc(sizeof(subjectFlatterm) * (subjectCount+1) );
-//     load_subjects(filenameSubjects, subjects, subjectCount, &timeParseSubject, net);
+    subjectFlatterm** subjects = malloc(sizeof(subjectFlatterm) * (subjectCount+1) );
+    load_subjects(filenameSubjects, subjects, subjectCount, &timeParseSubject, net);
+    int totalMatches = 0;
+    for (int i = 0; i < subjectCount; i++) {
+        //fprintf(stderr, "i: %d\n", i);
+        //print_subjectFlatterm(subjects[i]);
+        //printf("-----\nMatches:\n");
+        matchStart = clock();
+        match_set* matches = pattern_match_measure(net, subjects[i]);
+        matchEnd = clock();
+        timeMatch += (double)(matchEnd - matchStart) / CLOCKS_PER_SEC;
 
-//     for (int i = 0; i < subjectCount; i++) {
-//         //fprintf(stderr, "i: %d\n", i);
-//         //print_subjectFlatterm(subjects[i]);
-//         //printf("-----\nMatches:\n");
-//         matchStart = clock();
-//         match_set* matches = pattern_match_measure(net, subjects[i]);
-//         matchEnd = clock();
-//         timeMatch += (double)(matchEnd - matchStart) / CLOCKS_PER_SEC;
+        totalMatches += matches_size(matches);
 
-//         // for (int i = 0; i < vector_size(matches); i++) {
-//         //     net_match* match = (net_match*)vector_at(matches, i);
-//         //     printf("MatchID: %d\n", match->matchid);
-//         //     for (int i = 0; i < match->subst_amount; i++) {
-//         //         s_entry* su = &(match->substitutions[i]);
-//         //         printf("From: %s, To: ", su->from);
-//         //         subjectFlatterm* ft = su->to;
-//         //         for (int j = 0; j < su->len; j++) {
-//         //             printf("%s, ", ft->symbol);
-//         //             ft = ft->skip;
-//         //         }
-//         //         printf("\n");
-//         //     }
-//         // }
-//         match_set_free(matches);
-//     }
+        // for (int i = 0; i < vector_size(matches); i++) {
+        //     net_match* match = (net_match*)vector_at(matches, i);
+        //     printf("MatchID: %d\n", match->matchid);
+        //     for (int i = 0; i < match->subst_amount; i++) {
+        //         s_entry* su = &(match->substitutions[i]);
+        //         printf("From: %s, To: ", su->from);
+        //         subjectFlatterm* ft = su->to;
+        //         for (int j = 0; j < su->len; j++) {
+        //             printf("%s, ", ft->symbol);
+        //             ft = ft->skip;
+        //         }
+        //         printf("\n");
+        //     }
+        // }
 
-//     fprintf(stderr, "timeParsePattern: %f\n", timeParsePattern);
-//     fprintf(stderr, "timeAddPattern: %f\n", timeAddPattern);
-//     fprintf(stderr, "timeParseSubject: %f\n", timeParseSubject);
-//     fprintf(stderr, "timeMatch: %f\n", timeMatch);
-//     //vector_print_push_pop();
-//     //print_times();
+        // Crashes with empty match?
+        match_set_free(matches);
+    }
 
-//     IHCT_ASSERT(0 == 0);
-//     net_free(net);
+    fprintf(stderr, "timeParsePattern: %f\n", timeParsePattern);
+    fprintf(stderr, "timeAddPattern: %f\n", timeAddPattern);
+    fprintf(stderr, "timeParseSubject: %f\n", timeParseSubject);
+    fprintf(stderr, "timeMatch: %f\n", timeMatch);
+    fprintf(stderr, "totalMatches: %d\n", totalMatches);
+    //vector_print_push_pop();
+    //print_times();
 
-//     free(subjects);
-// }
+    IHCT_ASSERT(0 == 0);
+    net_free(net);
+
+    free(subjects);
+}
 
 // Something is left un-freed...
 IHCT_TEST(variable_match) {

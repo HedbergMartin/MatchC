@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 	
 	printf("Net: \n");
 	print_net(net);
-	match_set* matches = pattern_match(net, "f[g[1], g[1]]");
+	match_set* matches = pattern_match(net, "f[g[1], g[2]]");
 	printf("-----\nMatches:\n");
 
 	for (int i = 0; i < matches_size(matches); i++) {
