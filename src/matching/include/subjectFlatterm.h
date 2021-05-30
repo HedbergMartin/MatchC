@@ -14,7 +14,7 @@ typedef struct subjectFlatterm {
     char** fullName;
 }subjectFlatterm;
 
-subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt, int nextId);
+subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt);
 void print_subjectFlatterm(struct subjectFlatterm* sf);
 void subjectFlatterm_free(struct subjectFlatterm* ft);
 

@@ -30,6 +30,7 @@ hash_table* hash_table_init(int hash_size) {
     hash_table* ht = malloc(sizeof(struct hash_table));
     ht->entries = calloc(hash_size, sizeof(struct hash_entry**));
     ht->size = hash_size;    
+    ht->nextId = 1;
     return ht;
 }
 
@@ -40,7 +41,7 @@ hash_table* hash_table_init(int hash_size) {
  * @param id value as int
  * @return new hash_entry
  */
-hash_entry* _hash_entry_init(char* key, int id ) {
+hash_entry* _hash_entry_init(char* key, int id) {
     struct hash_entry* hte = calloc(1, sizeof(struct hash_entry));
 
     hte->key = key;
@@ -81,7 +82,11 @@ hash_entry* _hash_table_find_entry(struct hash_table* ht, char* key) {
  * @param nextId id to use if entry is new
  * @return id for the key
  */
-int hash_table_insert_if_absent(struct hash_table* ht, char* key, int* nextId ) {
+int hash_table_insert_if_absent(struct hash_table* ht, char* key) {
+
+    if (ht->size == 0) {
+        fprintf(stderr, "Ht == NULL\n");
+    }
     size_t index = _hash_func(key, ht->size);
 
     struct hash_entry* hte_temp = _hash_table_find_entry(ht, key);
@@ -89,8 +94,8 @@ int hash_table_insert_if_absent(struct hash_table* ht, char* key, int* nextId ) 
     if (hte_temp != NULL) {
         return hte_temp->id;
     } else {
-        struct hash_entry* hte = _hash_entry_init(key, *nextId);
-        *nextId += 1;
+        struct hash_entry* hte = _hash_entry_init(key, ht->nextId );
+        ht->nextId += 1;
         hte->next = ht->entries[index];
         ht->entries[index] = hte;
 

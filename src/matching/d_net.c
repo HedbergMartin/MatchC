@@ -3,9 +3,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "hash_table_linked.h"
 #include "subjectFlatterm.h"
 #include "match_entry.h"
+#include "parser.h"
 
 typedef struct net_branch {
     char* symbol;
@@ -21,14 +21,9 @@ struct d_net {
     net_branch* root;
     hash_table* symbolHt;
     vector* idLookup;
-    int nextId;
 };
 
-int net_nextId(d_net* dn) {
-    return dn->nextId;
-}
-
-net_branch* find_subnet(net_branch* dn, int id, enum functype f_type);
+net_branch* find_subnet(net_branch* dn, int id, enum matchtype m_type, enum functype f_type);
 
 net_branch* branch_init() {
     net_branch* b = malloc(sizeof(net_branch));
@@ -44,9 +39,10 @@ d_net* net_init() {
     d_net* dn = malloc(sizeof(d_net));
     dn->root = branch_init();
     dn->symbolHt = hash_table_init(500);
+    //dn->symbolHt = hash_table_init(100);
     dn->idLookup = vector_init();
     vector_push_back(dn->idLookup, NULL);
-    dn->nextId = 1;
+    return dn;
 }
 
 hash_table* getSymbolHt(d_net* dn) {
@@ -60,24 +56,23 @@ void _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
 
     net_branch* subnet = NULL;
     while (t) {
-        int id = hash_table_insert_if_absent(dn->symbolHt, t->symbol, &dn->nextId);
 
-        if ((subnet = find_subnet(b, id, t->f_type)) != NULL) {
+        if ((subnet = find_subnet(b, t->id, t->m_type, t->f_type)) != NULL) {
             free(t->symbol);
             b = subnet;
         } else {
-            if (id == vector_size(dn->idLookup)) {
-                vector_push_back(dn->idLookup, t->symbol);
-            } else if (id > vector_size(dn->idLookup)) { //Remove me later
+            if (t->m_type != MT_CONSTANT && t->id == vector_size(dn->idLookup)) {
+                vector_push_back(dn->idLookup, t->symbol); //!This will get fucked atm...
+            } /*else if (id > vector_size(dn->idLookup)) { //Remove me later
                 fprintf(stderr, "ERROR: id > vector_size(dn->idLookup)\n");
                 exit(1);
-            }
+            }*/
 
             subnet = branch_init();
             subnet->symbol = t->symbol;
             subnet->m_type = t->m_type;
             subnet->f_type = t->f_type;
-            subnet->id = id;
+            subnet->id = t->id;
             vector_push_back(b->subnets, subnet);
             b = subnet;
         }
@@ -89,23 +84,29 @@ void _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
     flatterm_free(ft);
 }
 
-void add_pattern(d_net* dn, flatterm* ft) {
-    _add_pattern(dn, dn->root, ft);
+void add_pattern(d_net* dn, const char str[]) {
+    //fprintf(stderr, "%p\n", dn->symbolHt);
+    flatterm* ft = parsePattern(str, dn->symbolHt);
+
+    if (ft != NULL) {
+        _add_pattern(dn, dn->root, ft);
+    } else {
+        fprintf(stderr, "failed at parsing flatterm for %s\n", str);
+    }
+    
 }
 
 int get_patterns_added() {
     return patternsAdded;
 }
 
-net_branch* find_subnet(net_branch* dn, int id, enum functype f_type) {
+net_branch* find_subnet(net_branch* dn, int id, enum matchtype m_type, enum functype f_type) {
     void** sn_data = vector_data(dn->subnets);
     for (int i = 0; i < vector_size(dn->subnets); i++) {
         net_branch* sn = (net_branch*)sn_data[i];
 
-        if (sn->m_type == MT_CONSTANT && f_type == sn->f_type) { 
-            if (sn->id == id) {
-                return sn;
-            }
+        if (sn->m_type == m_type && f_type == sn->f_type && sn->id == id) { 
+            return sn;
         }
     }
 
@@ -436,7 +437,7 @@ match_set* pattern_match(d_net* dn, char* subject) {
     int_vector* sv = int_vector_init();
     sub_arr_entry* s_arr = calloc(vector_size(dn->idLookup), sizeof(sub_arr_entry)); //Todo maybe move into dnet
 
-	subjectFlatterm* ft_subject = parse_subject(subject, dn->symbolHt, dn->nextId); //!Note if f[x + y]
+	subjectFlatterm* ft_subject = parse_subject(subject, dn->symbolHt); //!Note if f[x + y]
 	// print_subjectFlatterm(ft_subject);
 
     _match(dn, dn->root, ft_subject, s_arr, sv, matches);

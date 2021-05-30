@@ -13,10 +13,11 @@ typedef struct hash_entry {
 typedef struct hash_table {
     struct hash_entry** entries;
     int size;
+    int nextId;
 }hash_table;
 
 struct hash_table* hash_table_init(int hash_size);
-int hash_table_insert_if_absent(struct hash_table* ht, char* key, int* nextId);
+int hash_table_insert_if_absent(struct hash_table* ht, char* key);
 void hash_table_insert_entry_unsafe(struct hash_table* ht, char* key, int id);
 void hash_table_insert_entry(struct hash_table* ht, char* key, int id);
 int hash_table_get_entry(struct hash_table* ht, char* key);

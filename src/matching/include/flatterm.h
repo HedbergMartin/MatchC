@@ -25,6 +25,7 @@ typedef struct term {
 	enum matchtype m_type;
 	enum functype f_type;
 	char* symbol;
+	int id;
 } term;
 
 flatterm* flatterm_init();

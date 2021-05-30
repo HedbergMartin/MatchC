@@ -49,7 +49,7 @@ char* parse_name(char* subject, int start, int end) {
     return name;
 }
 
-struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, int* index, hash_table* subjectHt, hash_table* symbolHt, int* nextId, int* variableCount) {
+struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, int* index, hash_table* subjectHt, hash_table* symbolHt, int* variableCount) {
     int start = *index;
     int end = *index;
 
@@ -67,7 +67,7 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
                 int id = hash_table_get_entry(symbolHt, name);
 
                 if (id == -1) {
-                    id = hash_table_insert_if_absent(subjectHt, name, nextId);
+                    id = hash_table_insert_if_absent(subjectHt, name);
                 }
                 struct subjectFlatterm* current = new_subjectFlatterm(name);
                 *variableCount += 1;
@@ -96,7 +96,7 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
 
                 if (subject[*index] == '[') {
                     current->f_type = FT_PREFIX;
-                    prev = _parse_subject(subject, current, index, subjectHt, symbolHt, nextId, variableCount);
+                    prev = _parse_subject(subject, current, index, subjectHt, symbolHt, variableCount);
                     current->skip = NULL;
                     nextIsSkip = true;
                     start = *index + 1;
@@ -129,10 +129,10 @@ void full_name_parsing(char** fullName, int index, subjectFlatterm* parent) {
     
 }
 
-void add_fullname(subjectFlatterm* current, char* name, char** fullName, int* index, hash_table* subjectHt, int* nextId) {
+void add_fullname(subjectFlatterm* current, char* name, char** fullName, int* index, hash_table* subjectHt) {
     fullName[*index] = name;
     if (current->f_type == FT_PREFIX) {
-        current->fullNameId = hash_table_insert_if_absent(subjectHt, name, nextId);
+        current->fullNameId = hash_table_insert_if_absent(subjectHt, name);
     } else {
         current->fullNameId = current->id;
     }
@@ -140,13 +140,13 @@ void add_fullname(subjectFlatterm* current, char* name, char** fullName, int* in
     (*index)++;
 }
 
-char* dive(subjectFlatterm* current, char** fullName, int* index, char* buffer, hash_table* subjectHt, int* nextId) {
+char* dive(subjectFlatterm* current, char** fullName, int* index, char* buffer, hash_table* subjectHt) {
     if (current->f_type == FT_PREFIX) {
         subjectFlatterm* ft = current->next;
         vector* v = vector_init();
 
         while (ft != current->skip) {
-            vector_push_back(v, dive(ft, fullName, index, buffer, subjectHt, nextId));
+            vector_push_back(v, dive(ft, fullName, index, buffer, subjectHt));
             ft = ft->skip;
         }
 
@@ -164,7 +164,7 @@ char* dive(subjectFlatterm* current, char** fullName, int* index, char* buffer, 
         (*index) = *index - amount_args + 1;
         while (ft != current->skip) {
             char* argsym = vector_at(v, i);
-            add_fullname(ft, argsym, fullName, index, subjectHt, nextId);
+            add_fullname(ft, argsym, fullName, index, subjectHt);
             
             int len = strlen(argsym);
             memcpy(&(buffer[pos]), argsym, len);
@@ -234,7 +234,7 @@ int full_name_func(subjectFlatterm* start, subjectFlatterm* parent, char* buffer
 }
 
 //Non function shit!!!
-int full_name_init(char* subject, subjectFlatterm* current, subjectFlatterm* parent, subjectFlatterm* first, int index, hash_table* subjectHt, int* nextId, char* buffer) {
+int full_name_init(char* subject, subjectFlatterm* current, subjectFlatterm* parent, subjectFlatterm* first, int index, hash_table* subjectHt, char* buffer) {
 
     if (current == NULL) {
         return index - 1;
@@ -247,7 +247,7 @@ int full_name_init(char* subject, subjectFlatterm* current, subjectFlatterm* par
             current->fullNameId = current->id;
             current->fullName = &first->fullName[index];    
         }
-        index = full_name_init(subject, current->skip, parent, first, index + 1, subjectHt, nextId, buffer);
+        index = full_name_init(subject, current->skip, parent, first, index + 1, subjectHt, buffer);
     }
     
     if (current->f_type == FT_PREFIX) {
@@ -256,10 +256,10 @@ int full_name_init(char* subject, subjectFlatterm* current, subjectFlatterm* par
         memcpy(fullName, buffer, len);
         fullName[len] = '\0';
         first->fullName[index] = fullName;
-        current->fullNameId = hash_table_insert_if_absent(subjectHt, fullName, nextId);
+        current->fullNameId = hash_table_insert_if_absent(subjectHt, fullName);
         current->fullName = &first->fullName[index];
 
-        index = full_name_init(subject, current->next, current, first, index + 1, subjectHt, nextId, buffer);
+        index = full_name_init(subject, current->next, current, first, index + 1, subjectHt, buffer);
     }
 
     return index;
@@ -317,12 +317,12 @@ int full_name_init(char* subject, subjectFlatterm* current, subjectFlatterm* par
 }*/
 
 // symbolHt should be const here
-subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt, int nextId) {
+subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt) {
     
     int index = 0;
     int variableCount = 0;
     hash_table* subjectHt = hash_table_init(500);
-    subjectFlatterm* first = _parse_subject(subject, NULL, &index, subjectHt, symbolHt, &nextId, &variableCount);
+    subjectFlatterm* first = _parse_subject(subject, NULL, &index, subjectHt, symbolHt, &variableCount);
 
     while (first->parent != NULL) {
         first = first->parent;
@@ -333,8 +333,8 @@ subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt, int nextId) 
     first->fullName = malloc(sizeof(char**) * variableCount);
     //int full_name_init(char* subject, subjectFlatterm* current, subjectFlatterm* parent, subjectFlatterm* first, int index, hash_table* subjectHt, int* nextId, char* buffer) 
     int fullNameIndex = variableCount - 1;
-    char* completeFunc = dive(first, first->fullName, &fullNameIndex, buffer, subjectHt, &nextId);
-    add_fullname(first, completeFunc, first->fullName, &fullNameIndex, subjectHt, &nextId);
+    char* completeFunc = dive(first, first->fullName, &fullNameIndex, buffer, subjectHt);
+    add_fullname(first, completeFunc, first->fullName, &fullNameIndex, subjectHt);
     //full_name_init(subject, first, first, first, 0, subjectHt, &nextId, buffer);
 
     free(buffer);

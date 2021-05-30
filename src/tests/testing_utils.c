@@ -138,8 +138,8 @@ int test_net(char* patterns[], char* subject, vector* refmatches) {
 
     int i = 0;
     while (patterns[i] != NULL) {
-        flatterm* ft = parsePattern(patterns[i]);
-        add_pattern(net, ft);
+        //flatterm* ft = parsePattern(patterns[i]);
+        add_pattern(net, patterns[i]);
         i++;
     }
 
@@ -196,18 +196,18 @@ void load_patterns(char* filename, d_net* net, double* parseTime, double* addTim
     } else {
         int i = 0;
         while (fgets(str, MAXCHAR, fp) != NULL) {
-            startParsePattern = clock();
-            flatterm* ft = parsePattern(str);
-            endParsePattern = clock();
-            *parseTime += (double)(endParsePattern - startParsePattern) / CLOCKS_PER_SEC;
-            if (ft == NULL) {
-                fprintf(stderr, "Error on line: %d\n ", i);
-            } else {
-                startAddPattern = clock();
-                add_pattern(net, ft);
-                endAddPattern = clock();
-                *addTime += (double)(endAddPattern - startAddPattern) / CLOCKS_PER_SEC;
-            }
+            //startParsePattern = clock();
+            //flatterm* ft = parsePattern(str);
+            //endParsePattern = clock();
+            //*parseTime += (double)(endParsePattern - startParsePattern) / CLOCKS_PER_SEC;
+            //if (ft == NULL) {
+            //    fprintf(stderr, "Error on line: %d\n ", i);
+            //} else {
+            startAddPattern = clock();
+            add_pattern(net, str);
+            endAddPattern = clock();
+            *addTime += (double)(endAddPattern - startAddPattern) / CLOCKS_PER_SEC;
+            //}
             //printf("%s", str);
             i += 1;
         }
@@ -234,7 +234,7 @@ void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount,
                 break;
             }
             startParseSubject = clock();
-            subjectFlatterm* sf = parse_subject(str, getSymbolHt(net), net_nextId(net));
+            subjectFlatterm* sf = parse_subject(str, getSymbolHt(net));
             endParseSubject = clock();
             *parseTime += (double)(endParseSubject - startParseSubject) / CLOCKS_PER_SEC;
 
