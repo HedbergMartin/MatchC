@@ -4,6 +4,7 @@
 #include "subjectFlatterm.h"
 #include "int_vector.h"
 #include "vector.h"
+#include "net_branch.h"
 
 typedef struct match_set match_set;
 
@@ -24,7 +25,7 @@ typedef struct sub_arr_entry {
     int len;
 } sub_arr_entry;
 
-match_entry* create_match(char* pattern, sub_arr_entry* s_arr, flatterm* matchingFt, int depth);
+match_entry* create_match(sub_arr_entry* s_arr, branch_match* match_data);
 
 match_set* create_match_set(subjectFlatterm* ft, vector* matches);
 

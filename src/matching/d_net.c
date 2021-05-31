@@ -6,53 +6,33 @@
 #include "subjectFlatterm.h"
 #include "match_entry.h"
 #include "parser.h"
+#include "net_branch.h"
 
-typedef struct net_branch {
-    char* symbol;
-    int id;
-	enum matchtype m_type;
-	enum functype f_type;
-    vector* subnets;
-    int isMatch; //For debugging only
-    flatterm* match;
-} net_branch;
+#include "match_types.h"
 
 //!Make sure to find max variable depth
 struct d_net {
     net_branch* root;
     hash_table* symbolHt;
     int max_depth;
+    int totalPatterns;
     //vector* idLookup;
 };
 
 net_branch* find_subnet(net_branch* dn, int id, enum matchtype m_type, enum functype f_type);
 
-net_branch* branch_init() {
-    net_branch* b = malloc(sizeof(net_branch));
-    b->subnets = vector_init();
-    b->symbol = "";
-    b->match = NULL;
-    b->id = 0;
-
-    return b;
-}
-
 d_net* net_init() {
     d_net* dn = malloc(sizeof(d_net));
-    dn->root = branch_init();
+    dn->root = net_init_root();
     dn->symbolHt = hash_table_init(100);
     dn->max_depth = 0;
-    //dn->symbolHt = hash_table_init(100);
-    //dn->idLookup = vector_init();
-    //vector_push_back(dn->idLookup, NULL);
+
     return dn;
 }
 
 hash_table* getSymbolHt(d_net* dn) {
     return dn->symbolHt;
 }
-
-int patternsAdded = 0;
 
 /**
  * @brief 
@@ -62,7 +42,7 @@ int patternsAdded = 0;
  * @param ft 
  * @return flatterm* already existing identical flatterm or NULL if new flatterm
  */
-flatterm* _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
+void _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
     term* t = flatterm_first(ft);
     int current_depth = 0;
 
@@ -80,81 +60,55 @@ flatterm* _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
                 exit(1);
             }*/
 
-            subnet = branch_init();
-            subnet->symbol = t->symbol;
-            subnet->m_type = t->m_type;
-            subnet->f_type = t->f_type;
-            subnet->id = t->id;
-            vector_push_back(b->subnets, subnet);
-            b = subnet;
+            b = net_branch_add(b, t->id, t->m_type, t->f_type);
         }
         current_depth += 1;
         t = t->next;
     }
-    patternsAdded += 1;
+    dn->totalPatterns++;
     //subnet->isMatch = 1;
     if (current_depth >= dn->max_depth) {
         dn->max_depth = current_depth;
     }
 
-    if (b->match != NULL) {
-        flatterm_free(ft);
-        return b->match;
-    } else {
-        b->match = ft;
-        return NULL;
+    if (b->match_data == NULL) {
+        int len = 0;
+        net_branch_set_match(b, flatterm_pattern(ft), flatterm_take_variables(ft, &len), len);
     }
+
+    flatterm_free(ft);
 }
 
-void add_pattern(d_net* dn, const char str[]) {
+void add_pattern(d_net* dn, char str[]) {
     //fprintf(stderr, "%p\n", dn->symbolHt);
     flatterm* ft = parsePattern(str, dn->symbolHt);
 
     if (ft != NULL) {
-        flatterm* matchft = _add_pattern(dn, dn->root, ft);
-
-        if (matchft != NULL) {
-            /*fprintf(stderr, "\nNet already has logically identical pattern to: %s \nAlready entered: ", str);
-            flatterm_print(matchft);*/
-        }
+        _add_pattern(dn, dn->root, ft);
     } else {
         fprintf(stderr, "failed at parsing flatterm for %s\n", str);
     }
     
 }
 
-int get_patterns_added() {
-    return patternsAdded;
+int get_patterns_added(d_net* net) {
+    return net->totalPatterns;
 }
-
-net_branch* find_subnet(net_branch* dn, int id, enum matchtype m_type, enum functype f_type) {
-    void** sn_data = vector_data(dn->subnets);
-    for (int i = 0; i < vector_size(dn->subnets); i++) {
-        net_branch* sn = (net_branch*)sn_data[i];
-
-        if (sn->id == id && sn->m_type == m_type && f_type == sn->f_type) { 
-            return sn;
-        }
-    }
-
-    return NULL;
-}
-
 
 int _print_net(net_branch* dn, int offset) {    
     int newBranch = 0;
-    printf("%s(%d) ", dn->symbol, dn->id);
-    for (int i = 0; i < vector_size(dn->subnets); i++) {
+    printf("%d ", dn->id);
+    for (int i = 0; i < net_branch_size(dn); i++) {
         if (newBranch) {
             for (int i = 0; i <= offset; i++) {
                 printf(" ");
             }
         }
-        net_branch* sn = (net_branch*)vector_at(dn->subnets, i);
-        newBranch = _print_net(sn, offset + strlen(sn->symbol) + 1);
+        net_branch* sn = net_branch_sub_branch(dn, i);
+        newBranch = _print_net(sn, offset + 1);
     }
-    if (vector_size(dn->subnets) == 0) {
-        printf(", isMatch: %d\n", dn->isMatch);
+    if (dn->match_data != NULL) {
+        printf(", match!\n");
         return 1;
     }
     return newBranch;
@@ -162,9 +116,9 @@ int _print_net(net_branch* dn, int offset) {
 
 void print_net(d_net* dn) {
     net_branch* b = dn->root;
-    for (int i = 0; i < vector_size(b->subnets); i++) {
-        net_branch* sn = (net_branch*)vector_at(b->subnets, i);
-        _print_net(sn, strlen(sn->symbol));
+    for (int i = 0; i < net_branch_size(b); i++) {
+        net_branch* sn = net_branch_sub_branch(b, i);
+        _print_net(sn, 0);
         printf("\n");
     }
 }
@@ -230,27 +184,26 @@ clock_t time3Start;
 clock_t time3End;*/
 
 //void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s_arr, int_vector* sv, vector* matches) {
-void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s_arr, vector* matches, int max_branch_id) {
+void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s_arr, vector* matches) {
 
-    if (branch->id > max_branch_id && branch->m_type != MT_CONSTANT) {
-        max_branch_id = branch->id;
-    }
+    // if (branch->id > max_branch_id && branch->m_type != MT_CONSTANT) {
+    //     max_branch_id = branch->id;
+    // }
     if (t == NULL) {
         net_branch* subnet = NULL;
-        void** subnet_data = vector_data(branch->subnets);
-        for (int i = 0; i < vector_size(branch->subnets); i++) {
-            subnet = (net_branch*)subnet_data[i];
+        for (int i = 0; i < net_branch_size(branch); i++) {
+            subnet = net_branch_sub_branch(branch, i);
             if (subnet->m_type == MT_STAR) {
 
                 switch (is_valid_match(subnet->id, NULL, -1, s_arr, true)) {
                 case 1:
-                    _match(net, subnet, t, s_arr, matches, max_branch_id);
+                    _match(net, subnet, t, s_arr, matches);
                     break;
                 case 2:
                     s_arr[subnet->id].to = NULL;
                     s_arr[subnet->id].len = -1;
 
-                    _match(net, subnet, t, s_arr, matches, max_branch_id);
+                    _match(net, subnet, t, s_arr, matches);
                     s_arr[subnet->id].to = NULL;
                     s_arr[subnet->id].len = 0;
                     break;
@@ -260,26 +213,25 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
             }
         }
 
-        if (branch->match != NULL) {
+        if (branch->match_data != NULL) {
             // TODO add pattern pointer from net
             //fprintf(stderr, "Found a match %d\n");
 
             //for (int i = 0; i < branch->id)
-            match_entry* new_match = create_match(NULL, s_arr, branch->match, max_branch_id);
+            match_entry* new_match = create_match(s_arr, branch->match_data);
             vector_push_back(matches, new_match);
         }
     } else {
         net_branch* subnet = NULL;
         enum functype f_type = t->f_type;
 
-        void** subnet_data = vector_data(branch->subnets);
-        for (int i = 0; i < vector_size(branch->subnets); i++) {
-            subnet = (net_branch*)subnet_data[i];
+        for (int i = 0; i < net_branch_size(branch); i++) {
+            subnet = net_branch_sub_branch(branch, i);
 
             if (subnet->m_type == MT_CONSTANT) {
                 if (f_type == subnet->f_type) { 
                     if (subnet->id == t->id) {
-                        _match(net, subnet, t->next, s_arr, matches, max_branch_id);
+                        _match(net, subnet, t->next, s_arr, matches);
                     }
                 }
                 continue;
@@ -287,12 +239,12 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                 switch (is_valid_match(subnet->id, t, 1, s_arr, false)) {
                 case 1:
                     // Matching generic function name
-                    _match(net, subnet, t->next, s_arr, matches, max_branch_id);
+                    _match(net, subnet, t->next, s_arr, matches);
                     break;
                 case 2:
                     s_arr[subnet->id].to = t;
                     s_arr[subnet->id].len = 1;
-                    _match(net, subnet, t->next, s_arr, matches, max_branch_id);
+                    _match(net, subnet, t->next, s_arr, matches);
 
                     s_arr[subnet->id].to = NULL;
                     s_arr[subnet->id].len = 0;
@@ -308,13 +260,13 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
 
                 switch (is_valid_match(subnet->id, NULL, -1, s_arr, true)) {
                 case 1:
-                    _match(net, subnet, t, s_arr, matches, max_branch_id);
+                    _match(net, subnet, t, s_arr, matches);
                     break;
                 case 2:
                     s_arr[subnet->id].to = NULL;
                     s_arr[subnet->id].len = -1;
 
-                    _match(net, subnet, t, s_arr, matches, max_branch_id);
+                    _match(net, subnet, t, s_arr, matches);
                     s_arr[subnet->id].to = NULL;
                     s_arr[subnet->id].len = 0;
                     break;
@@ -326,7 +278,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
             switch (is_valid_match(subnet->id, t, 1, s_arr, true)) {
             case 1:
                 // Variable substitution matching, replace whole term.
-                _match(net, subnet, t->skip, s_arr, matches, max_branch_id);
+                _match(net, subnet, t->skip, s_arr, matches);
                 break;
             case 2:
                 //fprintf(stderr, "setting %d to %p\n", subnet->id, t);
@@ -334,7 +286,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                 s_arr[subnet->id].len = 1;
 
                 // Variable substitution matching, replace whole term.
-                _match(net, subnet, t->skip, s_arr, matches, max_branch_id);
+                _match(net, subnet, t->skip, s_arr, matches);
 
                 s_arr[subnet->id].to = NULL;
                 s_arr[subnet->id].len = 0;
@@ -354,13 +306,13 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                         //matcha med den substitutionen
                         switch (is_valid_match(subnet->id, t, len, s_arr, true)) {
                         case 1:
-                            _match(net, subnet, tEnd->skip, s_arr, matches, max_branch_id);
+                            _match(net, subnet, tEnd->skip, s_arr, matches);
                             break;
                         case 2:
                             s_arr[subnet->id].to = t;
                             s_arr[subnet->id].len = len;
 
-                            _match(net, subnet, tEnd->skip, s_arr, matches, max_branch_id);
+                            _match(net, subnet, tEnd->skip, s_arr, matches);
                             s_arr[subnet->id].to = NULL;
                             s_arr[subnet->id].len = 0;
                             break;
@@ -383,49 +335,32 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
 
 match_set* pattern_match(d_net* dn, char* subject) {
     vector* matches = vector_init();
-    int_vector* sv = int_vector_init();
     sub_arr_entry* s_arr = calloc(dn->max_depth, sizeof(sub_arr_entry)); //Todo maybe move into dnet
 
 	subjectFlatterm* ft_subject = parse_subject(subject, dn->symbolHt); //!Note if f[x + y]
-	// print_subjectFlatterm(ft_subject);
+	print_subjectFlatterm(ft_subject);
 
-    _match(dn, dn->root, ft_subject, s_arr, matches, 0);
+    _match(dn, dn->root, ft_subject, s_arr, matches);
 
     free(s_arr);
-    int_vector_free(sv);
     return create_match_set(ft_subject, matches);
 }
 
 match_set* pattern_match_measure(d_net* dn, subjectFlatterm* ft_subject) {
     vector* matches = vector_init();
-    int_vector* sv = int_vector_init();
     sub_arr_entry* s_arr = calloc(dn->max_depth, sizeof(sub_arr_entry)); //Todo maybe move into dnet
 	// print_subjectFlatterm(ft_subject);
 
-    _match(dn, dn->root, ft_subject, s_arr, matches, 0);
+    _match(dn, dn->root, ft_subject, s_arr, matches);
 
     // subjectFlatterm_free(ft_subject); // !Note Cant free here because it is needed by results, how to handle this?
     free(s_arr);
-    int_vector_free(sv);
     return create_match_set(ft_subject, matches);
 }
 
-
-void _branch_free(void* netVoid) {
-    net_branch* net = (net_branch*)netVoid;
-    vector_free(net->subnets, _branch_free);
-    //free(net->symbol);
-    if (net->match != NULL) {
-        flatterm_free(net->match);
-    }
-    free(net);   
-}
-
 void net_free(d_net* net) {
-    vector_free(net->root->subnets, _branch_free);
-    free(net->root);
+    net_root_free(net->root);
     hash_table_free(net->symbolHt);
-    //vector_free(net->idLookup, NULL);
     free(net);
     
 }

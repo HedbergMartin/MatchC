@@ -1,6 +1,6 @@
 #ifndef SUBJECTFLATTERM_H
 #define SUBJECTFLATTERM_H
-#include "flatterm.h"
+#include "match_types.h"
 #include "hash_table_linked.h"
 
 typedef struct subjectFlatterm {

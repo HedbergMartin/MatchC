@@ -44,6 +44,8 @@ size_t vector_capacity(vector* v);
 
 void vector_clear(vector* v, free_func_callback free_func);
 
+void** vector_copy(vector* v);
+
 // Frees the vector, free_func for each entry
 void vector_free(vector* v, free_func_callback free_func);
 

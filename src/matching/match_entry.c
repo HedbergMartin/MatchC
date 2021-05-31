@@ -9,22 +9,16 @@ struct match_set {
     vector* matches; //TODO Make speciallized vector datatype
 };
 
-match_entry* create_match(char* pattern, sub_arr_entry* s_arr, flatterm* matchingFt, int depth) {
+match_entry* create_match(sub_arr_entry* s_arr, branch_match* match_data) {
     match_entry* match = malloc(sizeof(match_entry));
-    match->pattern = pattern;
-    match->subst_amount = depth;
+    match->pattern = match_data->pattern;
+    match->subst_amount = match_data->len;
     match->substitutions = malloc(match->subst_amount * sizeof(substitution));
-    term* current = flatterm_first(matchingFt);
 
     for (int i = 1; i < match->subst_amount + 1; i++) {
 
-        if (current->m_type == MT_CONSTANT) {
-            current = current->next;
-            i -= 1;
-            continue;
-        } 
         substitution* sub = &(match->substitutions[i - 1]);
-        sub->from = current->symbol;
+        sub->from = match_data->variable_names[i];
         sub->len = s_arr[i].len;
         //fprintf(stderr, "\nFrom: %s, to - ", sub->from);
 
@@ -35,11 +29,12 @@ match_entry* create_match(char* pattern, sub_arr_entry* s_arr, flatterm* matchin
 
         if (s_arr[i].to != NULL) {
 
-            if (current->f_type == FT_PREFIX && current->m_type == MT_VARIABLE) {
-                sub->to = &s_arr[i].to->symbol;
-            } else {
-                sub->to = s_arr[i].to->fullName;
-            }
+            //TODO change char** array to datatype with char** and int...
+            // if (current->f_type == FT_PREFIX && current->m_type == MT_VARIABLE) {
+            //     sub->to = &s_arr[i].to->symbol;
+            // } else {
+            //     sub->to = s_arr[i].to->fullName;
+            // }
             //fprintf(stderr, "%s, ", *sub->to);
             
             /*subjectFlatterm* ft = s_arr[i].to;
@@ -52,7 +47,6 @@ match_entry* create_match(char* pattern, sub_arr_entry* s_arr, flatterm* matchin
         } else {
             sub->to = NULL;
         }
-        current = current->next;
     }
 
     return match;

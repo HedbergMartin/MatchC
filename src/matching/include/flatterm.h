@@ -1,18 +1,7 @@
 #ifndef MC_FLATTERM
 #define MC_FLATTERM
+#include "match_types.h"
 
-enum matchtype {
-	MT_CONSTANT, // 2 or f
-	MT_VARIABLE, // f_ or x_
-	MT_SEQUENCE, // f__ or x__
-	MT_STAR // f___ or x___
-};
-
-enum functype {
-	FT_NOTAFUNC,
-	FT_PREFIX,
-	FT_INFIX
-};
 
 typedef struct flatterm flatterm;
 
@@ -30,13 +19,17 @@ typedef struct term {
 
 flatterm* flatterm_init();
 
-flatterm* flatterm_init_complete(term* first, term* end);
+flatterm* flatterm_init_complete(term* first, term* end, char* pattern, char** variable_names, int variables);
 
 term* flatterm_push_back(flatterm* ft);
 
 term* flatterm_first(flatterm* ft);
 
 term* flatterm_end(flatterm* ft);
+
+char** flatterm_take_variables(flatterm* ft, int* amount);
+
+char* flatterm_pattern(flatterm* ft);
 
 void flatterm_free(flatterm* ft);
 
