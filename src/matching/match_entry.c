@@ -15,9 +15,9 @@ match_entry* create_match(sub_arr_entry* s_arr, branch_match* match_data) {
     match->subst_amount = match_data->len;
     match->substitutions = malloc(match->subst_amount * sizeof(substitution));
 
-    for (int i = 1; i < match->subst_amount + 1; i++) {
+    for (int i = 0; i < match->subst_amount; i++) {
 
-        substitution* sub = &(match->substitutions[i - 1]);
+        substitution* sub = &(match->substitutions[i]);
         sub->from = match_data->variable_names[i];
         sub->len = s_arr[i].len;
         //fprintf(stderr, "\nFrom: %s, to - ", sub->from);
@@ -33,7 +33,7 @@ match_entry* create_match(sub_arr_entry* s_arr, branch_match* match_data) {
             // if (current->f_type == FT_PREFIX && current->m_type == MT_VARIABLE) {
             //     sub->to = &s_arr[i].to->symbol;
             // } else {
-            //     sub->to = s_arr[i].to->fullName;
+                sub->to = s_arr[i].to->fullName;
             // }
             //fprintf(stderr, "%s, ", *sub->to);
             

@@ -73,7 +73,8 @@ void _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
 
     if (b->match_data == NULL) {
         int len = 0;
-        net_branch_set_match(b, flatterm_pattern(ft), flatterm_take_variables(ft, &len), len);
+        char** variables = flatterm_take_variables(ft, &len);
+        net_branch_set_match(b, flatterm_pattern(ft), variables, len);
     }
 
     flatterm_free(ft);
@@ -127,7 +128,7 @@ void print_net(d_net* dn) {
  * return int 0 for invalid, 1 for existing, 2 for new
  */
 int is_valid_match(int patternId, subjectFlatterm* sf, int sfLen, sub_arr_entry* s_arr, bool fullNameIdMatching) {
-    sub_arr_entry* entry = &s_arr[patternId];
+    sub_arr_entry* entry = &s_arr[patternId - 1];
     
 
     if (entry->len == 0) {
@@ -200,12 +201,12 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                     _match(net, subnet, t, s_arr, matches);
                     break;
                 case 2:
-                    s_arr[subnet->id].to = NULL;
-                    s_arr[subnet->id].len = -1;
+                    s_arr[subnet->id - 1].to = NULL;
+                    s_arr[subnet->id - 1].len = -1;
 
                     _match(net, subnet, t, s_arr, matches);
-                    s_arr[subnet->id].to = NULL;
-                    s_arr[subnet->id].len = 0;
+                    s_arr[subnet->id - 1].to = NULL;
+                    s_arr[subnet->id - 1].len = 0;
                     break;
                 case 0: //invalid match;
                     break;
@@ -242,12 +243,12 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                     _match(net, subnet, t->next, s_arr, matches);
                     break;
                 case 2:
-                    s_arr[subnet->id].to = t;
-                    s_arr[subnet->id].len = 1;
+                    s_arr[subnet->id - 1].to = t;
+                    s_arr[subnet->id - 1].len = 1;
                     _match(net, subnet, t->next, s_arr, matches);
 
-                    s_arr[subnet->id].to = NULL;
-                    s_arr[subnet->id].len = 0;
+                    s_arr[subnet->id - 1].to = NULL;
+                    s_arr[subnet->id - 1].len = 0;
                     break;
                 case 0: //invalid match;
                     break;
@@ -263,12 +264,12 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                     _match(net, subnet, t, s_arr, matches);
                     break;
                 case 2:
-                    s_arr[subnet->id].to = NULL;
-                    s_arr[subnet->id].len = -1;
+                    s_arr[subnet->id - 1].to = NULL;
+                    s_arr[subnet->id - 1].len = -1;
 
                     _match(net, subnet, t, s_arr, matches);
-                    s_arr[subnet->id].to = NULL;
-                    s_arr[subnet->id].len = 0;
+                    s_arr[subnet->id - 1].to = NULL;
+                    s_arr[subnet->id - 1].len = 0;
                     break;
                 case 0: //invalid match;
                     break;
@@ -282,14 +283,14 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                 break;
             case 2:
                 //fprintf(stderr, "setting %d to %p\n", subnet->id, t);
-                s_arr[subnet->id].to = t;
-                s_arr[subnet->id].len = 1;
+                s_arr[subnet->id - 1].to = t;
+                s_arr[subnet->id - 1].len = 1;
 
                 // Variable substitution matching, replace whole term.
                 _match(net, subnet, t->skip, s_arr, matches);
 
-                s_arr[subnet->id].to = NULL;
-                s_arr[subnet->id].len = 0;
+                s_arr[subnet->id - 1].to = NULL;
+                s_arr[subnet->id - 1].len = 0;
                 break;
             case 0: //invalid match;
                 break;
@@ -309,12 +310,12 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
                             _match(net, subnet, tEnd->skip, s_arr, matches);
                             break;
                         case 2:
-                            s_arr[subnet->id].to = t;
-                            s_arr[subnet->id].len = len;
+                            s_arr[subnet->id - 1].to = t;
+                            s_arr[subnet->id - 1].len = len;
 
                             _match(net, subnet, tEnd->skip, s_arr, matches);
-                            s_arr[subnet->id].to = NULL;
-                            s_arr[subnet->id].len = 0;
+                            s_arr[subnet->id - 1].to = NULL;
+                            s_arr[subnet->id - 1].len = 0;
                             break;
                         case 0: //invalid match;
                             break;
@@ -362,5 +363,4 @@ void net_free(d_net* net) {
     net_root_free(net->root);
     hash_table_free(net->symbolHt);
     free(net);
-    
 }

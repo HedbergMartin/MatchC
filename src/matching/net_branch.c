@@ -64,6 +64,8 @@ void net_branch_set_match(net_branch* v, char* pattern, char** variable_names, i
 	bm->pattern = pattern;
 	bm->variable_names = variable_names;
 	bm->len = len;
+
+	v->match_data = bm;
 }
 
 net_branch* net_branch_sub_branch(net_branch* b, size_t index) {
