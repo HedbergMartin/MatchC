@@ -9,7 +9,7 @@ IHCT_TEST(perf_test) {
     char* filenamePatterns = "../../../patterns.txt";
     char* filenameSubjects = "../../../subjects.txt";
     d_net* net = net_init();
-    int subjectCount = 100000;
+    int subjectCount = 100;
 
     double timeParsePattern = 0;
     double timeAddPattern = 0;
@@ -36,16 +36,15 @@ IHCT_TEST(perf_test) {
 
         totalMatches += matches_size(matches);
 
-        // for (int i = 0; i < vector_size(matches); i++) {
-        //     net_match* match = (net_match*)vector_at(matches, i);
-        //     printf("MatchID: %d\n", match->matchid);
-        //     for (int i = 0; i < match->subst_amount; i++) {
-        //         s_entry* su = &(match->substitutions[i]);
+        // for (int i = 0; i < matches_size(matches); i++) {
+        //     match_entry* match = get_match(matches, i);
+        //     printf("MatchID: %s\n", match->pattern);
+        //     for (int k = 0; k < match->subst_amount; k++) {
+        //         substitution* su = &(match->substitutions[k]);
         //         printf("From: %s, To: ", su->from);
-        //         subjectFlatterm* ft = su->to;
+        //         char** ft = su->to;
         //         for (int j = 0; j < su->len; j++) {
-        //             printf("%s, ", ft->symbol);
-        //             ft = ft->skip;
+        //             printf("%s, ", ft[j]);
         //         }
         //         printf("\n");
         //     }
@@ -161,7 +160,7 @@ IHCT_TEST(sequence_match) {
     REGISTER_MATCH
 
     ADD_SUBST("x", 2, "a", "b");
-    ADD_SUBST("y", 1, "c");fprintf(stderr, "%s[", current->symbol);
+    ADD_SUBST("y", 1, "c");
     REGISTER_MATCH
 
     ADD_SUBST("x", 3, "a", "b", "c");
