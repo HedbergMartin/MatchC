@@ -101,7 +101,6 @@ void net_branch_free(branch_vector* v) {
 		net_branch* subbranch = &(v->data[i]);
 		branch_match* bm = subbranch->match_data;
 		if (bm != NULL) {
-			free(bm->pattern);
 			for (int k = 0; k < bm->len; k++) {
 				free(bm->variable_names[k]);
 			}
