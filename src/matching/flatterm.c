@@ -1,6 +1,7 @@
 #include "flatterm.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <errno.h>
 
 struct flatterm {
@@ -67,6 +68,7 @@ void flatterm_free(flatterm* ft) {
     term* t = flatterm_first(ft);
     while (t) {
         term* next = t->next;
+        free(t->symbol);
         free(t);
         t = next;
     }
@@ -74,7 +76,7 @@ void flatterm_free(flatterm* ft) {
     free(ft);
 }
 
-void flatterm_print(flatterm* ft) {
+void flatterm_print_debug(flatterm* ft) {
     term* t = flatterm_first(ft);
     while (t) {
         //printf("Symbol: %s, type: %s, matching: %s, end-sym: %s\n", t->symbol, (t->f_type ? "prefix" : "symbol"), (t->m_type ? "variable" : "constant"), t->end->symbol);
@@ -84,4 +86,55 @@ void flatterm_print(flatterm* ft) {
         fprintf(stderr, "end-sym: %s\n", t->end->symbol);
         t = t->next;
     }
+}
+
+
+void _flatterm_func_print(term* current, term* parent) {
+    bool prevWasVar = false;
+
+    while (current != NULL && (parent == NULL || parent->end->next != current)) {
+        
+        if (current->f_type == FT_PREFIX) {
+
+            switch(current->m_type) {
+            case MT_CONSTANT:
+                fprintf(stderr, "%s[", current->symbol);
+            case MT_VARIABLE:
+                fprintf(stderr, "%s_[", current->symbol);
+            }
+
+            
+            _flatterm_func_print(current->next, current);
+            fprintf(stderr, "]");
+            current = current->end->next;
+        } else {
+
+            if (prevWasVar == true) {
+                fprintf(stderr, ", ");
+            }
+
+            switch(current->m_type) {
+            case MT_CONSTANT:
+                fprintf(stderr, "%s", current->symbol);
+                break;
+            case MT_VARIABLE:
+                fprintf(stderr, "%s_", current->symbol);
+                break;
+            case MT_SEQUENCE:
+                fprintf(stderr, "%s__", current->symbol);
+                break;
+            case MT_STAR:
+                fprintf(stderr, "%s___", current->symbol);
+                break;
+            }
+            prevWasVar = true;
+            current = current->next;
+        }
+    }
+}
+
+void flatterm_print(flatterm* ft) {
+    term* t = flatterm_first(ft);
+
+    _flatterm_func_print(t, NULL);
 }

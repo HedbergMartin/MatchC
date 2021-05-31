@@ -161,7 +161,7 @@ IHCT_TEST(sequence_match) {
     REGISTER_MATCH
 
     ADD_SUBST("x", 2, "a", "b");
-    ADD_SUBST("y", 1, "c");
+    ADD_SUBST("y", 1, "c");fprintf(stderr, "%s[", current->symbol);
     REGISTER_MATCH
 
     ADD_SUBST("x", 3, "a", "b", "c");
@@ -274,6 +274,18 @@ IHCT_TEST(sequence_mid_function) {
 
     ASSERT_MATCH(patterns, "f[g, 1, h[a[]], 2, 1]", 0);
 }
+
+
+IHCT_TEST(const_test) {
+    char* patterns[] = {"f[x_, p, x_]", NULL};
+
+    INIT_MATCHER
+    ADD_SUBST("x", 1, "t");
+    REGISTER_MATCH
+
+    ASSERT_MATCH(patterns, "f[t, p, t]", 0);
+}
+
 
 IHCT_TEST(nested_function_to_variable) {
     char* patterns[] = {"f[x_,y_,x_]", NULL};
@@ -424,6 +436,7 @@ IHCT_TEST(sequence_single) {
 
     ASSERT_MATCH(patterns, "f[a]", 0);
 }
+
 
 int main(int argc, char **argv) {
     return IHCT_RUN(argc, argv);

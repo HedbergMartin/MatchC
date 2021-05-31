@@ -10,7 +10,7 @@
 typedef struct d_net d_net;
 
 d_net* net_init();
-void add_pattern(d_net* dn, flatterm* ft);
+void add_pattern(d_net* dn, const char str[]);
 void print_net(d_net* dn);
 match_set* pattern_match(d_net* dn, char* subject);
 void net_free(d_net* net);

@@ -14,16 +14,18 @@ int main(int argc, char* argv[]) {
 	//flatterm* ft = parsePattern("f[p_[c[]], t_ + 4 * d] := x");
   //flatterm* ft_subject = parsePattern("f(a, 2, c) := x");
 	//add_pattern(net, parsePattern("f(x_(2), y_) := x"));
-	flatterm* ft = parsePattern("f[x_, x_]");	//!Remove :=
+	//hash_table* ht_constants = hash_table_init(100);
+	//flatterm* ft = parsePattern("f[x_, x_]", ht_constants);	//!Remove :=
 	// flatterm_print(ft);
 	// fprintf(stderr, "done\n");
 	//add_pattern(net, parsePattern("f[x___, y__] := x"));
-	add_pattern(net, ft);
+	add_pattern(net, "fz[]");
+	add_pattern(net, "fl_[]");
 	
-	printf("Net: \n");
-	print_net(net);
-	match_set* matches = pattern_match(net, "f[g[1], g[2]]");
-	printf("-----\nMatches:\n");
+	//printf("Net: \n");
+	//print_net(net);
+	match_set* matches = pattern_match(net, "f[a]");
+	printf("\n-----\nMatches:\n");
 
 	for (int i = 0; i < matches_size(matches); i++) {
 		match_entry* match = get_match(matches, i);
