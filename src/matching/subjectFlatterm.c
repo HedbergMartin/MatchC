@@ -388,6 +388,10 @@ void print_subjectFlatterm(struct subjectFlatterm* sf) {
 
 
 void subjectFlatterm_free(struct subjectFlatterm* ft) {
+
+    if (ft == NULL) {
+        return;
+    }
     char** fullName = ft->fullName;
 
     while (ft != NULL) {
@@ -400,5 +404,9 @@ void subjectFlatterm_free(struct subjectFlatterm* ft) {
         free(ft);
         ft = next;
     }
-    free(fullName);
+
+    if (fullName != NULL) {
+        free(fullName);
+    }
+    
 }

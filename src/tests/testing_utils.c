@@ -7,7 +7,7 @@
 #include "time.h"
 
 // Uncomment for debugging prints
-// #define PATTERN_DEBUG
+//#define PATTERN_DEBUG
 
 match_entry* create_ref_match(char* pattern, vector* v) {
     match_entry* nm = calloc(1, sizeof(match_entry));
@@ -63,7 +63,7 @@ void free_ref_match(void* var) {
 
 int compare_subst(substitution* su, substitution* suRef) {
     #ifdef PATTERN_DEBUG
-        printf("From: %s(%s), Len: %d(%d), To: ", su->from, suRef->from, su->len, suRef->len);
+        printf("\nFrom: %s(%s), Len: %d(%d), To: ", su->from, suRef->from, su->len, suRef->len);
     #endif
 
     if (su->len != suRef->len) {
@@ -134,6 +134,10 @@ int valid_match(match_entry* match, vector* refmatches) {
 }
 
 int test_net(char* patterns[], char* subject, vector* refmatches) {
+    #ifdef PATTERN_DEBUG
+        fprintf(stderr, "starting testing\n");
+    #endif
+    
 	d_net* net = net_init();
 
     int i = 0;

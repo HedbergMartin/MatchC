@@ -292,5 +292,6 @@ flatterm* parsePattern(const char str[], hash_table* ht_constants) {
         }
         i += 1;
     }
+    hash_table_free(ht_variables);
     return flatify(first);
 }

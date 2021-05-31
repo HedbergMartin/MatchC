@@ -24,7 +24,7 @@ typedef struct sub_arr_entry {
     int len;
 } sub_arr_entry;
 
-match_entry* create_match(char* pattern, int_vector* sv, sub_arr_entry* s_arr, vector* idLookup);
+match_entry* create_match(char* pattern, sub_arr_entry* s_arr, flatterm* matchingFt, int depth);
 
 match_set* create_match_set(subjectFlatterm* ft, vector* matches);
 
