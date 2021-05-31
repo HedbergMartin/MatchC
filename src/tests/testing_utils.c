@@ -86,6 +86,10 @@ int compare_subst(substitution* su, substitution* suRef) {
         }
     }
 
+    #ifdef PATTERN_DEBUG
+        printf("\n");
+    #endif
+
     return 1;
 }
 
@@ -123,6 +127,9 @@ int valid_match(match_entry* match, vector* refmatches) {
         }
 
         if (subCorrect == true ) {
+            #ifdef PATTERN_DEBUG
+                printf("Substitution found!\n");
+            #endif
             return 1;
         }
 
@@ -130,6 +137,9 @@ int valid_match(match_entry* match, vector* refmatches) {
         //printf("%s", str);
     }
 
+    #ifdef PATTERN_DEBUG
+        printf("Substitution missing!\n");
+    #endif
     return 0;
 }
 
