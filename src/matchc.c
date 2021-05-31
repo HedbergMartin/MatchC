@@ -19,8 +19,8 @@ int main(int argc, char* argv[]) {
 	// flatterm_print(ft);
 	// fprintf(stderr, "done\n");
 	//add_pattern(net, parsePattern("f[x___, y__] := x"));
-	add_pattern(net, "fl_[]");
 	add_pattern(net, "fz[]");
+	add_pattern(net, "fl_[]");
 	
 	//printf("Net: \n");
 	//print_net(net);

@@ -95,7 +95,15 @@ void _flatterm_func_print(term* current, term* parent) {
     while (current != NULL && (parent == NULL || parent->end->next != current)) {
         
         if (current->f_type == FT_PREFIX) {
-            fprintf(stderr, "%s[", current->symbol);
+
+            switch(current->m_type) {
+            case MT_CONSTANT:
+                fprintf(stderr, "%s[", current->symbol);
+            case MT_VARIABLE:
+                fprintf(stderr, "%s_[", current->symbol);
+            }
+
+            
             _flatterm_func_print(current->next, current);
             fprintf(stderr, "]");
             current = current->end->next;
