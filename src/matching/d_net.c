@@ -14,7 +14,7 @@
 struct d_net {
     net_branch* root;
     hash_table* symbolHt;
-    int max_depth;
+    int max_variables;
     int totalPatterns;
     //vector* idLookup;
 };
@@ -25,7 +25,7 @@ d_net* net_init() {
     d_net* dn = malloc(sizeof(d_net));
     dn->root = net_init_root();
     dn->symbolHt = hash_table_init(100, 0);
-    dn->max_depth = 0;
+    dn->max_variables = 0;
 
     return dn;
 }
@@ -44,7 +44,6 @@ hash_table* getSymbolHt(d_net* dn) {
  */
 void _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
     term* t = flatterm_first(ft);
-    int current_depth = 0;
 
     net_branch* subnet = NULL;
     while (t) {
@@ -62,19 +61,18 @@ void _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
 
             b = net_branch_add(b, t->id, t->m_type, t->f_type);
         }
-        current_depth += 1;
         t = t->next;
     }
     dn->totalPatterns++;
-    //subnet->isMatch = 1;
-    if (current_depth >= dn->max_depth) {
-        dn->max_depth = current_depth;
-    }
 
     if (b->match_data == NULL) {
         int len = 0;
         variable_entry* variables = flatterm_take_variables(ft, &len);
         net_branch_set_match(b, flatterm_pattern(ft), variables, len);
+
+        if (dn->max_variables < len) {
+            dn->max_variables = len;
+        }
     }
 
     flatterm_free(ft);
@@ -332,7 +330,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
 
 match_set* pattern_match(d_net* dn, char* subject) {
     vector* matches = vector_init();
-    sub_arr_entry* s_arr = calloc(dn->max_depth, sizeof(sub_arr_entry)); //Todo maybe move into dnet
+    sub_arr_entry* s_arr = calloc(dn->max_variables, sizeof(sub_arr_entry)); //Todo maybe move into dnet
 
 	subjectFlatterm* ft_subject = parse_subject(subject, dn->symbolHt); //!Note if f[x + y]
 	// print_subjectFlatterm(ft_subject);
@@ -345,7 +343,7 @@ match_set* pattern_match(d_net* dn, char* subject) {
 
 match_set* pattern_match_measure(d_net* dn, subjectFlatterm* ft_subject) {
     vector* matches = vector_init();
-    sub_arr_entry* s_arr = calloc(dn->max_depth, sizeof(sub_arr_entry)); //Todo maybe move into dnet
+    sub_arr_entry* s_arr = calloc(dn->max_variables, sizeof(sub_arr_entry)); //Todo maybe move into dnet
 	// print_subjectFlatterm(ft_subject);
 
     _match(dn, dn->root, ft_subject, s_arr, matches);
