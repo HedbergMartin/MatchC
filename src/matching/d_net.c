@@ -29,6 +29,15 @@ d_net* net_init() {
     return dn;
 }
 
+d_net* net_init_symbolHt(hash_table* symbolHt) {
+    d_net* dn = malloc(sizeof(d_net));
+    dn->root = net_init_root();
+    dn->symbolHt = symbolHt;
+    dn->max_variables = 0;
+
+    return dn;
+}
+
 hash_table* getSymbolHt(d_net* dn) {
     return dn->symbolHt;
 }
@@ -41,7 +50,7 @@ hash_table* getSymbolHt(d_net* dn) {
  * @param ft 
  * @return flatterm* already existing identical flatterm or NULL if new flatterm
  */
-void _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
+char* _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
     term* t = flatterm_first(ft);
     int current_depth = 0;
 
@@ -67,8 +76,11 @@ void _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
 
     if (b->match_data != NULL) {
         flatterm_free(ft);
+        b->match_data->matches += 1;
+        return b->match_data->pattern;
     } else {
         net_branch_set_match(b, flatterm_pattern(ft), ft);
+        return NULL;
     }
 }
 
@@ -76,12 +88,34 @@ void add_pattern(d_net* dn, char str[]) {
     flatterm* ft = parsePattern(str, dn->symbolHt);
 
     if (ft != NULL) {
-        _add_pattern(dn, dn->root, ft);
+        char* existing_match = _add_pattern(dn, dn->root, ft);
+
+        if (existing_match != NULL) {
+            //fprintf(stderr, "\nNet already has logically identical pattern to: %s \nAlready entered: %s", str, existing_match);
+        }
     } else {
         fprintf(stderr, "failed at parsing flatterm for %s\n", str);
     }
     
 }
+
+
+void add_pattern_measure(d_net* dn, const char str[], hash_table* symbolHt) {
+    //fprintf(stderr, "%p\n", dn->symbolHt);
+    flatterm* ft = parsePattern(str, symbolHt);
+
+    if (ft != NULL) {
+        char* existing_match = _add_pattern(dn, dn->root, ft);
+
+        if (existing_match != NULL) {
+            fprintf(stderr, "\nNet already has logically identical pattern to: %s \nAlready entered: %s", str, existing_match);
+        }
+    } else {
+        fprintf(stderr, "failed at parsing flatterm for %s\n", str);
+    }
+    
+}
+
 
 int get_patterns_added(d_net* net) {
     return net->totalPatterns;
@@ -119,7 +153,18 @@ void print_net(d_net* dn) {
  * return int 0 for invalid, 1 for existing, 2 for new
  */
 int is_valid_match(int patternId, subjectFlatterm* sf, int sfLen, sub_arr_entry* s_arr, bool fullNameIdMatching) {
+
+    if (patternId < 0) {
+        fprintf(stderr, "Getting neg patternId\n");
+    }
     sub_arr_entry* entry = &s_arr[patternId];
+
+
+    if (entry == NULL) {
+        fprintf(stderr, "entry null: %d\n", patternId);
+        exit(1);
+    }
+    
     
 
     if (entry->len == 0) {
@@ -155,6 +200,7 @@ int is_valid_match(int patternId, subjectFlatterm* sf, int sfLen, sub_arr_entry*
 }
 
 void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s_arr, vector* matches, int max_branch_id) {
+    
 
     if (branch->id > max_branch_id && branch->m_type != MT_CONSTANT) {
         max_branch_id = branch->id;
@@ -185,7 +231,7 @@ void _match(d_net* net, net_branch* branch, subjectFlatterm* t, sub_arr_entry* s
         }
 
         if (branch->match_data != NULL) {
-            match_entry* new_match = create_match(branch->match_data->pattern, s_arr, branch->match_data->ft, max_branch_id);
+            match_entry* new_match = create_match(branch->match_data->pattern, s_arr, branch->match_data->ft, max_branch_id, branch->match_data->matches);
             vector_push_back(matches, new_match);
         }
     } else {

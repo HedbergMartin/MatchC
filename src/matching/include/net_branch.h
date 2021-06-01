@@ -10,6 +10,7 @@ typedef struct branch_vector branch_vector;
 typedef struct branch_match {
     char* pattern;
     flatterm* ft;
+    int matches;
 }branch_match;
 
 typedef struct net_branch {

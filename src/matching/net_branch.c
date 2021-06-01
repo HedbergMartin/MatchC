@@ -64,6 +64,7 @@ void net_branch_set_match(net_branch* v, char* pattern, flatterm* ft) {
 	branch_match* bm = malloc(sizeof(branch_match));
 	bm->pattern = pattern;
 	bm->ft = ft;
+	bm->matches = 1;
 
 	v->match_data = bm;
 }

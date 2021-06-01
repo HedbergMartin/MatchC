@@ -120,7 +120,7 @@ term* _parseNextTerm(const char str[], int *index, term* prev, term* parent, has
     }
 
     if (t->m_type == MT_CONSTANT) {
-        t->id = hash_table_insert_if_absent(ht_constants, t->symbol);
+        t->id = -1 * hash_table_insert_if_absent(ht_constants, t->symbol);
     } else {
         t->id = hash_table_insert_if_absent(ht_variables, t->symbol);
     }

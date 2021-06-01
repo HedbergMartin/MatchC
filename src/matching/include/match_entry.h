@@ -18,6 +18,7 @@ typedef struct match_entry {
     char* pattern;
     substitution* substitutions;
     int subst_amount;
+    int matchCount;
 } match_entry;
 
 typedef struct sub_arr_entry {
@@ -25,7 +26,7 @@ typedef struct sub_arr_entry {
     int len;
 } sub_arr_entry;
 
-match_entry* create_match(char* pattern, sub_arr_entry* s_arr, flatterm* matchingFt, int depth);
+match_entry* create_match(char* pattern, sub_arr_entry* s_arr, flatterm* matchingFt, int depth, int matchCount);
 
 match_set* create_match_set(subjectFlatterm* ft, vector* matches);
 

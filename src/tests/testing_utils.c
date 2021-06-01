@@ -229,6 +229,46 @@ void load_patterns(char* filename, d_net* net, double* parseTime, double* addTim
     }    
 }
 
+void load_patterns_different(char* filename, d_net** nets, int patternCount, double* parseTime, double* addTime ) {
+    
+    int MAXCHAR = 10000;
+    FILE *fp;
+    char str[MAXCHAR];
+
+    fp = fopen(filename, "r");
+    clock_t startParsePattern;
+    clock_t endParsePattern;
+    clock_t startAddPattern;
+    clock_t endAddPattern;
+    if (fp == NULL){
+        fprintf(stderr, "Could not open file %s",filename);
+        perror(" ");
+    } else {
+        int i = 0;
+        while (fgets(str, MAXCHAR, fp) != NULL) {
+
+            if (i >= patternCount) {
+                break;
+            }
+            //startParsePattern = clock();
+            //flatterm* ft = parsePattern(str);
+            //endParsePattern = clock();
+            //*parseTime += (double)(endParsePattern - startParsePattern) / CLOCKS_PER_SEC;
+            //if (ft == NULL) {
+            //    fprintf(stderr, "Error on line: %d\n ", i);
+            //} else {
+            startAddPattern = clock();
+            add_pattern(nets[i], str);
+            endAddPattern = clock();
+            *addTime += (double)(endAddPattern - startAddPattern) / CLOCKS_PER_SEC;
+            //}
+            //printf("%s", str);
+            i += 1;
+        }
+        fclose(fp);
+    }    
+}
+
 void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount, double* parseTime, d_net* net) {
     int MAXCHAR = 5000;
     FILE *fp;
@@ -264,6 +304,45 @@ void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount,
         fclose(fp);
     }    
 }
+
+
+/*void load_subjects_from_different(char* filename, subjectFlatterm** subjects, int subjectCount, double* parseTime, d_net** nets, int patternCount) {
+    hash_table* htConcat = hash_table_init(100);
+
+    int MAXCHAR = 5000;
+    FILE *fp;
+    char str[MAXCHAR];
+
+    clock_t startParseSubject;
+    clock_t endParseSubject;
+    fp = fopen(filename, "r");
+    if (fp == NULL){
+        fprintf(stderr, "Could not open file %s",filename);
+        perror(" ");
+    } else {
+        int i = 0;
+        while (fgets(str, MAXCHAR, fp) != NULL) {
+
+            if (i >= subjectCount) {
+                break;
+            }
+            startParseSubject = clock();
+            subjectFlatterm* sf = parse_subject(str, getSymbolHt(net));
+            endParseSubject = clock();
+            *parseTime += (double)(endParseSubject - startParseSubject) / CLOCKS_PER_SEC;
+
+            if (sf == NULL) {
+                fprintf(stderr, "Error on line: %d\n ", i);
+            } else {
+                subjects[i] = sf;
+                /*print_subjectFlatterm(sf);
+                fprintf(stderr, "Successfully parsed line: %d\n", i);
+            }
+            i += 1;
+        }
+        fclose(fp);
+    }    
+}*/
 
 void test_free(void* var) {
     match_entry* match = (match_entry*)var;

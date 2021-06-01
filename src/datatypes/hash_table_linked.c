@@ -157,7 +157,7 @@ void hash_table_insert_entry(struct hash_table* ht, char* key, int id ) {
  * 
  * @param ht 
  * @param key 
- * @return The id of the entry, -1 if doesn't exist
+ * @return The id of the entry, 0 if doesn't exist
  */
 int hash_table_get_entry(struct hash_table* ht, char* key) {
     size_t index = _hash_func(key, ht->size);
@@ -165,7 +165,7 @@ int hash_table_get_entry(struct hash_table* ht, char* key) {
     struct hash_entry* hte_temp = _hash_table_find_entry(ht, key);
 
     if (hte_temp == NULL) {
-        return -1;
+        return 0;
     } else {
         return hte_temp->id;
     }

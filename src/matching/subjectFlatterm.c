@@ -64,9 +64,9 @@ struct subjectFlatterm* _parse_subject(char* subject, subjectFlatterm* parent, i
             start = *index + 1;
 
             if (name != NULL) { 
-                int id = hash_table_get_entry(symbolHt, name);
+                int id = -1 * hash_table_get_entry(symbolHt, name);
 
-                if (id == -1) {
+                if (id == 0) {
                     id = hash_table_insert_if_absent(subjectHt, name);
                 }
                 struct subjectFlatterm* current = new_subjectFlatterm(name);

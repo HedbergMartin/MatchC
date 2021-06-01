@@ -27,6 +27,8 @@ int test_net(char* patterns[], char* subject, vector* refmatches);
 
 void load_patterns(char* filename, d_net* net, double* parseTime, double* addTime );
 
+void load_patterns_different(char* filename, d_net** nets, int patternCount, double* parseTime, double* addTime );
+
 void load_subjects(char* filename, subjectFlatterm** subjects, int subjectCount, double* parseTime, d_net* net);
 
 void test_free(void* var);

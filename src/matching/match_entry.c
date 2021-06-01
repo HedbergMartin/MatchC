@@ -9,10 +9,11 @@ struct match_set {
     vector* matches; //TODO Make speciallized vector datatype
 };
 
-match_entry* create_match(char* pattern, sub_arr_entry* s_arr, flatterm* matchingFt, int depth) {
+match_entry* create_match(char* pattern, sub_arr_entry* s_arr, flatterm* matchingFt, int depth, int matchCount) {
     match_entry* match = malloc(sizeof(match_entry));
     match->pattern = pattern;
     match->subst_amount = depth;
+    match->matchCount = matchCount;
     match->substitutions = malloc(match->subst_amount * sizeof(substitution));
     term* current = flatterm_first(matchingFt);
 
