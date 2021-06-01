@@ -3,12 +3,13 @@
 
 #include <stdlib.h>
 #include "match_types.h"
+#include "variable_vector.h"
 
 typedef struct branch_vector branch_vector;
 
 typedef struct branch_match {
     char* pattern;
-    char** variable_names;
+    variable_entry* variable_names;
     int len;
 }branch_match;
 
@@ -30,7 +31,7 @@ void net_branch_reserve(net_branch* v, size_t capacity);
 net_branch* net_branch_add(net_branch* v, int id, enum matchtype m_type, enum functype f_type);
 
 // Sets the match config for the branch
-void net_branch_set_match(net_branch* v, char* pattern, char** variable_names, int len);
+void net_branch_set_match(net_branch* v, char* pattern, variable_entry* variable_names, int len);
 
 // Inspect an element
 net_branch* net_branch_sub_branch(net_branch* v, size_t index);

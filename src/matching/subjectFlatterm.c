@@ -321,7 +321,7 @@ subjectFlatterm* parse_subject(char* subject, hash_table* symbolHt) {
     
     int index = 0;
     int variableCount = 0;
-    hash_table* subjectHt = hash_table_init(500);
+    hash_table* subjectHt = hash_table_init(500, hash_table_nextId(symbolHt));
     subjectFlatterm* first = _parse_subject(subject, NULL, &index, subjectHt, symbolHt, &variableCount);
 
     while (first->parent != NULL) {

@@ -26,11 +26,11 @@ size_t _hash_func(char* key, int hash_size) {
  * @param hash_size Buckets for the hash table
  * @return New hash table struct
  */
-hash_table* hash_table_init(int hash_size) {
+hash_table* hash_table_init(int hash_size, int startId) {
     hash_table* ht = malloc(sizeof(struct hash_table));
     ht->entries = calloc(hash_size, sizeof(struct hash_entry**));
     ht->size = hash_size;    
-    ht->nextId = 1;
+    ht->nextId = startId;
     return ht;
 }
 
@@ -221,7 +221,10 @@ void _hash_table_delete_chain(struct hash_table* ht, int index) {
 
         free(hte_temp);
     }
-    
+}
+
+int hash_table_nextId(struct hash_table* ht) {
+    return ht->nextId;
 }
 
 /**

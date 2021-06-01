@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "parser.h"
-#include "vector.h"
+#include "variable_vector.h"
 
-term* _parseInfix(const char str[], int *index, term* term1, char* name, term** parent, hash_table* ht_variables, hash_table* ht_constants, vector* variables);
+term* _parseInfix(const char str[], int *index, term* term1, char* name, term** parent, hash_table* ht_variables, hash_table* ht_constants, variable_vector* variables);
 
 bool isAcceptedCharacter(char c) {
 	if ((c >= 'A' && c <= 'Z') || 
@@ -98,7 +98,7 @@ term* term_create(term* prev, term* parent) {
 	return new;
 }
 
-term* _parseNextTerm(const char str[], int *index, term* prev, term* parent, hash_table* ht_variables, hash_table* ht_constants, vector* variables) {
+term* _parseNextTerm(const char str[], int *index, term* prev, term* parent, hash_table* ht_variables, hash_table* ht_constants, variable_vector* variables) {
     int nameStart = *index;
 
     while (!isSpecialCharacter(str[*index])) {
@@ -123,9 +123,6 @@ term* _parseNextTerm(const char str[], int *index, term* prev, term* parent, has
         t->id = hash_table_insert_if_absent(ht_constants, t->symbol);
     } else {
         t->id = hash_table_insert_if_absent(ht_variables, t->symbol);
-        if (vector_size(variables) < t->id) {
-            vector_push_back(variables, t->symbol);
-        }
     }
 
     return t;
@@ -133,7 +130,7 @@ term* _parseNextTerm(const char str[], int *index, term* prev, term* parent, has
 
 char infixSymbols[] = {'+', '-', '/', '*'};
 char* infixNames[] = {"PLUS", "MINUS", "DIV", "MULT"};
-term* _parseInfixes(const char str[], int *index, term* term1, term** parent, hash_table* ht_variables, hash_table* ht_constants, vector* variables) {
+term* _parseInfixes(const char str[], int *index, term* term1, term** parent, hash_table* ht_variables, hash_table* ht_constants, variable_vector* variables) {
 
     for (int i = 0; i < sizeof(infixSymbols); i++) {
 
@@ -143,7 +140,7 @@ term* _parseInfixes(const char str[], int *index, term* term1, term** parent, ha
     }
 }
 
-term* _parseInfix(const char str[], int *index, term* term1, char* name, term** parent, hash_table* ht_variables, hash_table* ht_constants, vector* variables) {
+term* _parseInfix(const char str[], int *index, term* term1, char* name, term** parent, hash_table* ht_variables, hash_table* ht_constants, variable_vector* variables) {
     *index += 1;
     term* newParent = term_create(term1->prev, term1->parent);
     newParent->f_type = FT_PREFIX;
@@ -189,7 +186,7 @@ term* _parseInfix(const char str[], int *index, term* term1, char* name, term** 
 
 
 
-flatterm* flatify(term* first, char pattern[], vector* variables) {
+flatterm* flatify(term* first, char pattern[], variable_vector* variables) {
     term* last = first;
     //fprintf(stderr, "last: %s\n", last->symbol);
 
@@ -198,14 +195,14 @@ flatterm* flatify(term* first, char pattern[], vector* variables) {
         last = last->next;
         //fprintf(stderr, "last: %s\n", last->symbol);
     }
-    flatterm* ft = flatterm_init_complete(first, last, pattern, (char**)vector_copy(variables), vector_size(variables));
+    flatterm* ft = flatterm_init_complete(first, last, pattern, variable_vector_copy(variables), variable_vector_size(variables));
 
-    vector_free(variables, NULL);
+    variable_vector_free(variables);
     return ft;
 }
 
 flatterm* parsePattern(char str[], hash_table* ht_constants) {
-    vector* variables = vector_init();
+    variable_vector* variables = variable_vector_init();
     int i = 0;
     term* parent = NULL;
     term* prev = NULL;
@@ -214,7 +211,7 @@ flatterm* parsePattern(char str[], hash_table* ht_constants) {
     char* infixName = NULL;
     bool doneReading = false;
     bool wasInfixed = false;
-    hash_table* ht_variables = hash_table_init(100);
+    hash_table* ht_variables = hash_table_init(100, 0);
     int args = 0;
 
     while (str[i] != '\0') {
@@ -296,6 +293,15 @@ flatterm* parsePattern(char str[], hash_table* ht_constants) {
         
         if (current != NULL) {
             prev = current;
+            if (current->m_type != MT_CONSTANT) {
+                if (variable_vector_size(variables) < current->id + 1) {
+                    int fType = 0;
+                    if (current->f_type == FT_PREFIX) {
+                        fType = 1;
+                    }
+                    variable_vector_push_back(variables, current->symbol, fType);
+                }
+            }
         }
         i += 1;
     }

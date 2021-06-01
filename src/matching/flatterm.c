@@ -8,7 +8,7 @@ struct flatterm {
     term* first;
     term* end;
     char* pattern;
-    char** variable_names;
+    variable_entry* variable_names;
     int variables;
 };
 
@@ -22,7 +22,7 @@ flatterm* flatterm_init() {
     return ft;
 }
 
-flatterm* flatterm_init_complete(term* first, term* end, char* pattern, char** variable_names, int variables) {
+flatterm* flatterm_init_complete(term* first, term* end, char* pattern, variable_entry* variable_names, int variables) {
     flatterm* ft = calloc(1, sizeof(flatterm));
     if (!ft) {
         perror("flatterm");
@@ -34,10 +34,6 @@ flatterm* flatterm_init_complete(term* first, term* end, char* pattern, char** v
     ft->variable_names = variable_names;
     ft->variables = variables;
     ft->pattern = pattern;
-    
-    for (int i = 0; i < variables; i++) {
-        fprintf(stderr, "Name %d: %s\n", i, variable_names[i]);
-    }
     return ft;
 }
 
@@ -74,8 +70,8 @@ term* flatterm_end(flatterm* ft) {
     return ft->end;
 }
 
-char** flatterm_take_variables(flatterm* ft, int* amount) {
-    char** symbols = ft->variable_names;
+variable_entry* flatterm_take_variables(flatterm* ft, int* amount) {
+    variable_entry* symbols = ft->variable_names;
     *amount = ft->variables;
     ft->variable_names = NULL;
     return symbols;
@@ -95,7 +91,7 @@ void flatterm_free(flatterm* ft) {
 
     if (ft->variable_names != NULL) {
         for (int i = 0; i < ft->variables; i++) {
-            free(ft->variable_names[i]);
+            free(ft->variable_names[i].symbol);
         }
         free(ft->variable_names);
     }
