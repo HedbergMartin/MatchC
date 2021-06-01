@@ -73,7 +73,7 @@ void _add_pattern(d_net* dn, net_branch* b, flatterm* ft) {
 
     if (b->match_data == NULL) {
         int len = 0;
-        char** variables = flatterm_take_variables(ft, &len);
+        variable_entry* variables = flatterm_take_variables(ft, &len);
         net_branch_set_match(b, flatterm_pattern(ft), variables, len);
     }
 
