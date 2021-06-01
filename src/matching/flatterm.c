@@ -81,6 +81,7 @@ void flatterm_free(flatterm* ft) {
         t = next;
     }
 
+    free(ft->pattern);
     free(ft);
 }
 

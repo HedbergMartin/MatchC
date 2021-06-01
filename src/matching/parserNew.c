@@ -199,7 +199,7 @@ flatterm* flatify(term* first, char pattern[]) {
     return ft;
 }
 
-flatterm* parsePattern(char str[], hash_table* ht_constants) {
+flatterm* parsePattern(const char str[], hash_table* ht_constants) {
     int i = 0;
     term* parent = NULL;
     term* prev = NULL;
@@ -293,6 +293,9 @@ flatterm* parsePattern(char str[], hash_table* ht_constants) {
         }
         i += 1;
     }
+
+    char* pattern = malloc((i)*sizeof(char));
+    memcpy(pattern, str, i);
     hash_table_free(ht_variables);
-    return flatify(first, str);
+    return flatify(first, pattern);
 }
