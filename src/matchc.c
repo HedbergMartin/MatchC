@@ -19,12 +19,12 @@ int main(int argc, char* argv[]) {
 	// flatterm_print(ft);
 	// fprintf(stderr, "done\n");
 	//add_pattern(net, parsePattern("f[x___, y__] := x"));
-	add_pattern(net, "fz[]");
-	add_pattern(net, "fl_[]");
+	add_pattern(net, "f[x_]");
+	print_net(net);
 	
 	//printf("Net: \n");
 	//print_net(net);
-	match_set* matches = pattern_match(net, "f[a]");
+	match_set* matches = pattern_match(net, "f[2]");
 	printf("\n-----\nMatches:\n");
 
 	for (int i = 0; i < matches_size(matches); i++) {

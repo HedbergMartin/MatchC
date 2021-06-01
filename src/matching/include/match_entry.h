@@ -2,8 +2,9 @@
 #define MC_MATCH_ENTRY
 
 #include "subjectFlatterm.h"
-#include "int_vector.h"
 #include "vector.h"
+#include "net_branch.h"
+#include "flatterm.h"
 
 typedef struct match_set match_set;
 

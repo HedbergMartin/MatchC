@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "parser.h"
+#include "variable_vector.h"
 
 term* _parseInfix(const char str[], int *index, term* term1, char* name, term** parent, hash_table* ht_variables, hash_table* ht_constants);
 
@@ -185,7 +186,7 @@ term* _parseInfix(const char str[], int *index, term* term1, char* name, term** 
 
 
 
-flatterm* flatify(term* first) {
+flatterm* flatify(term* first, char pattern[]) {
     term* last = first;
     //fprintf(stderr, "last: %s\n", last->symbol);
 
@@ -194,11 +195,11 @@ flatterm* flatify(term* first) {
         last = last->next;
         //fprintf(stderr, "last: %s\n", last->symbol);
     }
-    flatterm* ft = flatterm_init_complete(first, last);
+    flatterm* ft = flatterm_init_complete(first, last, pattern, 0);
     return ft;
 }
 
-flatterm* parsePattern(const char str[], hash_table* ht_constants) {
+flatterm* parsePattern(char str[], hash_table* ht_constants) {
     int i = 0;
     term* parent = NULL;
     term* prev = NULL;
@@ -207,7 +208,7 @@ flatterm* parsePattern(const char str[], hash_table* ht_constants) {
     char* infixName = NULL;
     bool doneReading = false;
     bool wasInfixed = false;
-    hash_table* ht_variables = hash_table_init(100);
+    hash_table* ht_variables = hash_table_init(100, 1);
     int args = 0;
 
     while (str[i] != '\0') {
@@ -293,5 +294,5 @@ flatterm* parsePattern(const char str[], hash_table* ht_constants) {
         i += 1;
     }
     hash_table_free(ht_variables);
-    return flatify(first);
+    return flatify(first, str);
 }

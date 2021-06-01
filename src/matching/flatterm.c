@@ -7,6 +7,8 @@
 struct flatterm {
     term* first;
     term* end;
+    char* pattern;
+    int variables;
 };
 
 flatterm* flatterm_init() {
@@ -19,7 +21,7 @@ flatterm* flatterm_init() {
     return ft;
 }
 
-flatterm* flatterm_init_complete(term* first, term* end) {
+flatterm* flatterm_init_complete(term* first, term* end, char* pattern, int variables) {
     flatterm* ft = calloc(1, sizeof(flatterm));
     if (!ft) {
         perror("flatterm");
@@ -28,6 +30,8 @@ flatterm* flatterm_init_complete(term* first, term* end) {
 
     ft->first = first;
     ft->end = end;
+    ft->variables = variables;
+    ft->pattern = pattern;
     return ft;
 }
 
@@ -62,6 +66,10 @@ term* flatterm_first(flatterm* ft) {
 
 term* flatterm_end(flatterm* ft) {
     return ft->end;
+}
+
+char* flatterm_pattern(flatterm* ft) {
+    return ft->pattern;
 }
 
 void flatterm_free(flatterm* ft) {

@@ -11,7 +11,9 @@
         "random": "c",
         "*.cuh": "c",
         "string": "c",
-        "string_view": "c"
+        "string_view": "c",
+        "*.tcc": "c",
+        "vector.h": "c"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

@@ -148,6 +148,20 @@ void vector_clear(vector* v, free_func_callback free_func) {
 	v->size = 0;
 }
 
+void** vector_copy(vector* v) {
+	if (!v) {
+		return NULL;
+	}
+
+	if (v->size == 0) {
+		return NULL;
+	}
+
+	void** copy = malloc(v->size * sizeof(void*));
+	memcpy(copy, v->data, v->size * sizeof(void*));
+	return copy;
+}
+
 /*void vector_print_push_pop() {
 	fprintf(stderr, "Time Pushback: %f, Time popback: %f\n", timePushBack, timePopBack);
 }*/

@@ -13,7 +13,7 @@ struct char_vector {
 char_vector *char_vector_init() {
 	char_vector* v = calloc(1, sizeof(char_vector));
 	if (!v) {
-		perror("Vector");
+		perror("char_vector");
 		exit(1);
 	}
 

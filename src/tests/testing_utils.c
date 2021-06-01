@@ -7,7 +7,7 @@
 #include "time.h"
 
 // Uncomment for debugging prints
-//#define PATTERN_DEBUG
+// #define PATTERN_DEBUG
 
 match_entry* create_ref_match(char* pattern, vector* v) {
     match_entry* nm = calloc(1, sizeof(match_entry));
@@ -107,9 +107,9 @@ int valid_match(match_entry* match, vector* refmatches) {
             continue;
         }
 
-        if (match->pattern != refMatch->pattern) {
-            continue;
-        }
+        // if (match->pattern != refMatch->pattern) {
+        //     continue;
+        // }
 
         bool subCorrect = true;
         for (int i = 0; i < match->subst_amount; i++) {
