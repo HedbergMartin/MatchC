@@ -5,7 +5,7 @@
 #include "parser.h"
 #include "variable_vector.h"
 
-term* _parseInfix(const char str[], int *index, term* term1, char* name, term** parent, hash_table* ht_variables, hash_table* ht_constants, variable_vector* variables);
+term* _parseInfix(const char str[], int *index, term* term1, char* name, term** parent, hash_table* ht_variables, hash_table* ht_constants);
 
 bool isAcceptedCharacter(char c) {
 	if ((c >= 'A' && c <= 'Z') || 
@@ -98,7 +98,7 @@ term* term_create(term* prev, term* parent) {
 	return new;
 }
 
-term* _parseNextTerm(const char str[], int *index, term* prev, term* parent, hash_table* ht_variables, hash_table* ht_constants, variable_vector* variables) {
+term* _parseNextTerm(const char str[], int *index, term* prev, term* parent, hash_table* ht_variables, hash_table* ht_constants) {
     int nameStart = *index;
 
     while (!isSpecialCharacter(str[*index])) {
@@ -130,17 +130,17 @@ term* _parseNextTerm(const char str[], int *index, term* prev, term* parent, has
 
 char infixSymbols[] = {'+', '-', '/', '*'};
 char* infixNames[] = {"PLUS", "MINUS", "DIV", "MULT"};
-term* _parseInfixes(const char str[], int *index, term* term1, term** parent, hash_table* ht_variables, hash_table* ht_constants, variable_vector* variables) {
+term* _parseInfixes(const char str[], int *index, term* term1, term** parent, hash_table* ht_variables, hash_table* ht_constants) {
 
     for (int i = 0; i < sizeof(infixSymbols); i++) {
 
         if (str[*index] == infixSymbols[i]) {
-            return _parseInfix(str, index, term1, infixNames[i], parent, ht_variables, ht_constants, variables);
+            return _parseInfix(str, index, term1, infixNames[i], parent, ht_variables, ht_constants);
         }
     }
 }
 
-term* _parseInfix(const char str[], int *index, term* term1, char* name, term** parent, hash_table* ht_variables, hash_table* ht_constants, variable_vector* variables) {
+term* _parseInfix(const char str[], int *index, term* term1, char* name, term** parent, hash_table* ht_variables, hash_table* ht_constants) {
     *index += 1;
     term* newParent = term_create(term1->prev, term1->parent);
     newParent->f_type = FT_PREFIX;
@@ -153,7 +153,7 @@ term* _parseInfix(const char str[], int *index, term* term1, char* name, term** 
     memcpy(newParent->symbol, name, nameLen);
     newParent->symbol[nameLen] = '\0';
 
-    term* term2 = _parseNextTerm(str, index , term1, newParent, ht_variables, ht_constants, variables);
+    term* term2 = _parseNextTerm(str, index , term1, newParent, ht_variables, ht_constants);
 
     //!Need to handle this error
     if (term2 == NULL) { 
@@ -170,7 +170,7 @@ term* _parseInfix(const char str[], int *index, term* term1, char* name, term** 
     fprintf(stderr, "%s and %s\n", term1->symbol, term2->symbol);
 
     if (isInfix(str[*index])) {
-        term2 = _parseInfixes(str, index, term2, parent, ht_variables, ht_constants, variables);
+        term2 = _parseInfixes(str, index, term2, parent, ht_variables, ht_constants);
     }
 
     if (newParent->parent != NULL) {
@@ -186,7 +186,7 @@ term* _parseInfix(const char str[], int *index, term* term1, char* name, term** 
 
 
 
-flatterm* flatify(term* first, char pattern[], variable_vector* variables) {
+flatterm* flatify(term* first, char pattern[]) {
     term* last = first;
     //fprintf(stderr, "last: %s\n", last->symbol);
 
@@ -195,14 +195,11 @@ flatterm* flatify(term* first, char pattern[], variable_vector* variables) {
         last = last->next;
         //fprintf(stderr, "last: %s\n", last->symbol);
     }
-    flatterm* ft = flatterm_init_complete(first, last, pattern, variable_vector_copy(variables), variable_vector_size(variables));
-
-    variable_vector_free(variables);
+    flatterm* ft = flatterm_init_complete(first, last, pattern, 0);
     return ft;
 }
 
 flatterm* parsePattern(char str[], hash_table* ht_constants) {
-    variable_vector* variables = variable_vector_init();
     int i = 0;
     term* parent = NULL;
     term* prev = NULL;
@@ -211,11 +208,11 @@ flatterm* parsePattern(char str[], hash_table* ht_constants) {
     char* infixName = NULL;
     bool doneReading = false;
     bool wasInfixed = false;
-    hash_table* ht_variables = hash_table_init(100, 0);
+    hash_table* ht_variables = hash_table_init(100, 1);
     int args = 0;
 
     while (str[i] != '\0') {
-        current = _parseNextTerm(str, &i, prev, parent, ht_variables, ht_constants, variables);
+        current = _parseNextTerm(str, &i, prev, parent, ht_variables, ht_constants);
 
         if (first == NULL) {
             first = current;
@@ -282,7 +279,7 @@ flatterm* parsePattern(char str[], hash_table* ht_constants) {
             case '/':
 
                 if (current != NULL) {
-                    current = _parseInfixes(str, &i, current, &parent, ht_variables, ht_constants, variables);
+                    current = _parseInfixes(str, &i, current, &parent, ht_variables, ht_constants);
                 }
                 break;
         }
@@ -293,18 +290,9 @@ flatterm* parsePattern(char str[], hash_table* ht_constants) {
         
         if (current != NULL) {
             prev = current;
-            if (current->m_type != MT_CONSTANT) {
-                if (variable_vector_size(variables) < current->id + 1) {
-                    int fType = 0;
-                    if (current->f_type == FT_PREFIX) {
-                        fType = 1;
-                    }
-                    variable_vector_push_back(variables, current->symbol, fType);
-                }
-            }
         }
         i += 1;
     }
     hash_table_free(ht_variables);
-    return flatify(first, str, variables);
+    return flatify(first, str);
 }

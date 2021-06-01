@@ -60,11 +60,10 @@ net_branch* net_branch_add(net_branch* b, int id, enum matchtype m_type, enum fu
 	return &(v->data[v->size-1]);
 }
 
-void net_branch_set_match(net_branch* v, char* pattern, variable_entry* variable_names, int len) {
+void net_branch_set_match(net_branch* v, char* pattern, flatterm* ft) {
 	branch_match* bm = malloc(sizeof(branch_match));
 	bm->pattern = pattern;
-	bm->variable_names = variable_names;
-	bm->len = len;
+	bm->ft = ft;
 
 	v->match_data = bm;
 }
@@ -102,10 +101,7 @@ void net_branch_free(branch_vector* v) {
 		net_branch* subbranch = &(v->data[i]);
 		branch_match* bm = subbranch->match_data;
 		if (bm != NULL) {
-			for (int k = 0; k < bm->len; k++) {
-				free(bm->variable_names[k].symbol);
-			}
-			free(bm->variable_names);
+			flatterm_free(bm->ft);
 			free(bm);
 		}
 

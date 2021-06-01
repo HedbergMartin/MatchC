@@ -19,15 +19,13 @@ typedef struct term {
 
 flatterm* flatterm_init();
 
-flatterm* flatterm_init_complete(term* first, term* end, char* pattern, variable_entry* variable_names, int variables);
+flatterm* flatterm_init_complete(term* first, term* end, char* pattern, int variables);
 
 term* flatterm_push_back(flatterm* ft);
 
 term* flatterm_first(flatterm* ft);
 
 term* flatterm_end(flatterm* ft);
-
-variable_entry* flatterm_take_variables(flatterm* ft, int* amount);
 
 char* flatterm_pattern(flatterm* ft);
 
